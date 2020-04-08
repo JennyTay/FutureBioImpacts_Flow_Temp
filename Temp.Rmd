@@ -5,7 +5,99 @@ date: "April 7, 2020"
 output: html_document
 ---
 
-1. read in the three future temperature projectsion for MIROC CCSM4 and CanESM5  
-2. average the future projections together  
-3. filter for years 2100 (Moderate), 2095 (wet), and 2090 (dry)
-4. Read in models for 
+```{r}
+library(tidyverse)
+library(sf)
+
+```
+For temperature, rather than just looking at the three water year types, we will look at all the futur years to show trends.
+1. read in the three future temperature projectsion for MIROC CCSM4 and CanESM5 of the flow metrics
+2. average the future projections together and add on the 95% CIs to the 7day min, mean, and max
+3. 
+4. Read in models for
+
+The GCM stream temp preditions come from:
+line 232 Air_temp_future CanESM2_stream_temp
+line 760 Air_temp_future CCSM4_stream_temp
+line 1038 Air_temp_future MIROC5_stream_temp
+
+In this first chunk of code, we are reading in the stream temperature models, the baseline stream temperatures metrics and the projected stream temperature metrics for the three GCMs. The files are currently in other folders on the sccwrp L drive, so we read them in, and then re-save to this folder.  We average the metrics from each GCM and save the file as 'future'.
+
+```{r}
+# load("L:/Flow ecology and climate change_ES/Jenny/AirTemp/Modeling/mod_mean.rda")
+# save(mod_mean, file = "mean_temp_model.rda")
+load("mean_temp_model.rda")
+
+
+# load("L:/Flow ecology and climate change_ES/Jenny/AirTemp/Modeling/mod_max.rda")
+# save(mod_max, file = "max_temp_model.rda")
+load("max_temp_model.rda")
+# 
+# load("L:/Flow ecology and climate change_ES/Jenny/AirTemp/Modeling/mod_min.rda")
+# save(mod_min, file = "min_temp_model.rda")
+load("min_temp_model.rda")
+
+# load('L:/Flow ecology and climate change_ES/Jenny/AirTemp/Modeling/baseline_stream_temp_species_predictions.RData')
+# baseline_stream_temp_species_predictions <- baseline_stream_temp_species_predictions %>% 
+#   select(1:8)
+# save(baseline_stream_temp_species_predictions, file = "baseline_stream_temp.RData", compress = "xz")
+load("baseline_stream_temp.RData")
+
+# load('L:/Flow ecology and climate change_ES/Jenny/AirTemp/Modeling/MIROC5_stream_temp.RData')
+# load('L:/Flow ecology and climate change_ES/Jenny/AirTemp/Modeling/CCSM4_stream_temp.RData')
+# load('L:/Flow ecology and climate change_ES/Jenny/AirTemp/Modeling/CanESM2_stream_temp.RData')
+# 
+# future <- data.frame(
+#   "COMID" = MIROC5_stream_temp$COMID,
+#   "year" = MIROC5_stream_temp$year,
+#   "Max_Wkly_Mean_StreamT" = (MIROC5_stream_temp$Max_Wkly_Mean_StreamT + CCSM4_stream_temp$Max_Wkly_Mean_StreamT + CanESM2_stream_temp$Max_Wkly_Mean_StreamT) / 3,
+#   "Max_Wkl_Max_StreamT" = (MIROC5_stream_temp$Max_Wkl_Max_StreamT + CCSM4_stream_temp$Max_Wkl_Max_StreamT + CanESM2_stream_temp$Max_Wkl_Max_StreamT) / 3,
+#   "Min_Wkl_Min_StreamT" = (MIROC5_stream_temp$Min_Wkl_Min_StreamT + CCSM4_stream_temp$Min_Wkl_Min_StreamT + CanESM2_stream_temp$Min_Wkl_Min_StreamT) / 3,
+#   "Max_Wkl_Rng_StreamT" = (MIROC5_stream_temp$Max_Wkl_Rng_StreamT + CCSM4_stream_temp$Max_Wkl_Rng_StreamT + CanESM2_stream_temp$Max_Wkl_Rng_StreamT) / 3,
+#   "Mean_Wkl_Rng_StreamT" = (MIROC5_stream_temp$Mean_Wkl_Rng_StreamT + CCSM4_stream_temp$Mean_Wkl_Rng_StreamT + CanESM2_stream_temp$Mean_Wkl_Rng_StreamT) / 3,
+#   "Max_Wkl_Max_StreamT_grt_30_" = (MIROC5_stream_temp$Max_Wkl_Max_StreamT_grt_30_ + CCSM4_stream_temp$Max_Wkl_Max_StreamT_grt_30_ + CanESM2_stream_temp$Max_Wkl_Max_StreamT_grt_30_) / 3
+# )
+# 
+# save(future, file = "fut_strm_tmp.RData", compress = "xz")
+# 
+# rm(CanESM2_stream_temp, MIROC5_stream_temp, CCSM4_stream_temp)
+
+load("fut_strm_tmp.RData")
+
+```
+
+In this next chunk of code, we will make a watershed to COMID conversion file, so we can summarize by watershed
+```{r}
+NHD <- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16-18/NHDFLowline_Clip.shp")  %>% 
+  filter(FTYPE == "StreamRiver") %>% 
+  dplyr::select(COMID) %>% 
+  st_zm()
+
+wtrshd_bndry<- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16-18/RB4watershedBoundaty.shp") %>% 
+  dplyr::select(NAME) %>% 
+  st_zm() %>% 
+  rename(watershed = NAME)
+
+flow_wtrshed<- st_transform(NHD, crs = st_crs(wtrshd_bndry))
+flow_wtrshed<- st_join(wtrshd_bndry, flow_wtrshed) %>% data.frame() %>% dplyr::select(-geometry)
+
+
+future <- left_join(future, flow_wtrshed, by = "COMID")
+
+rm(NHD, wtrshd_bndry)
+
+save(future, file = "fut_strm_tmp_wtrshd.RData", compress = "xz")
+
+load("fut_strm_tmp_wtrshd.RData")
+
+```
+
+
+In this next chunk of code, we will summarize the data by year, and then by watershed and year, and plot the trendlines
+
+
+```{r}
+
+
+
+```
