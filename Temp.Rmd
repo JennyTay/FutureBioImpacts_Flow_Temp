@@ -1,0 +1,11 @@
+---
+title: "Temperature"
+author: "Jenny Rogers"
+date: "April 7, 2020"
+output: html_document
+---
+
+1. read in the three future temperature projectsion for MIROC CCSM4 and CanESM5  
+2. average the future projections together  
+3. filter for years 2100 (Moderate), 2095 (wet), and 2090 (dry)
+4. Read in models for 
