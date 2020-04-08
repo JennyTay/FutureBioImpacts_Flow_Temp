@@ -38,9 +38,11 @@ load("max_temp_model.rda")
 load("min_temp_model.rda")
 
 # load('L:/Flow ecology and climate change_ES/Jenny/AirTemp/Modeling/baseline_stream_temp_species_predictions.RData')
-# baseline_stream_temp_species_predictions <- baseline_stream_temp_species_predictions %>% 
+# baseline_stream_temp <- baseline_stream_temp_species_predictions %>%
 #   select(1:8)
-# save(baseline_stream_temp_species_predictions, file = "baseline_stream_temp.RData", compress = "xz")
+# baseline_stream_temp <- baseline_stream_temp[is.finite(rowSums(baseline_stream_temp)),]
+# save(baseline_stream_temp, file = "baseline_stream_temp.RData", compress = "xz")
+# rm(baseline_stream_temp_species_predictions)
 load("baseline_stream_temp.RData")
 
 # load('L:/Flow ecology and climate change_ES/Jenny/AirTemp/Modeling/MIROC5_stream_temp.RData')
@@ -57,6 +59,9 @@ load("baseline_stream_temp.RData")
 #   "Mean_Wkl_Rng_StreamT" = (MIROC5_stream_temp$Mean_Wkl_Rng_StreamT + CCSM4_stream_temp$Mean_Wkl_Rng_StreamT + CanESM2_stream_temp$Mean_Wkl_Rng_StreamT) / 3,
 #   "Max_Wkl_Max_StreamT_grt_30_" = (MIROC5_stream_temp$Max_Wkl_Max_StreamT_grt_30_ + CCSM4_stream_temp$Max_Wkl_Max_StreamT_grt_30_ + CanESM2_stream_temp$Max_Wkl_Max_StreamT_grt_30_) / 3
 # )
+# 
+# 
+# future <- future[is.finite(rowSums(future)),]
 # 
 # save(future, file = "fut_strm_tmp.RData", compress = "xz")
 # 
@@ -82,22 +87,97 @@ flow_wtrshed<- st_transform(NHD, crs = st_crs(wtrshd_bndry))
 flow_wtrshed<- st_join(wtrshd_bndry, flow_wtrshed) %>% data.frame() %>% dplyr::select(-geometry)
 
 
-future <- left_join(future, flow_wtrshed, by = "COMID")
+future <- left_join(future, flow_wtrshed, by = "COMID") %>% 
+  filter(!is.na(watershed))
+
+baseline_stream_temp <- left_join(baseline_stream_temp, flow_wtrshed, by = "COMID") %>% 
+  filter(!is.na(watershed))
 
 rm(NHD, wtrshd_bndry)
 
 save(future, file = "fut_strm_tmp_wtrshd.RData", compress = "xz")
+save(baseline_stream_temp, file = "baseline_stream_temp_wtrshd.RData", compress = "xz")
 
-load("fut_strm_tmp_wtrshd.RData")
 
 ```
 
 
-In this next chunk of code, we will summarize the data by year, and then by watershed and year, and plot the trendlines
+In this next chunk of code, we will add the 95% confidence intervals to the projections for the 7-day max, mean, and min
+then we will rbind the basline years with the future years
 
 
 ```{r}
 
+load("fut_strm_tmp_wtrshd.RData")
 
+fut_CI <- future %>% 
+  mutate(max_upr = Max_Wkl_Max_StreamT + 1.96 * sigma(mod_max),
+         mean_upr = Max_Wkly_Mean_StreamT + 1.96 * sigma(mod_mean),
+         min_upr = Min_Wkl_Min_StreamT + 1.96 * sigma(mod_min),
+         max_lwr = Max_Wkl_Max_StreamT  - 1.96 * sigma(mod_max),
+         mean_lwr = Max_Wkly_Mean_StreamT - 1.96 * sigma(mod_mean),
+         min_lwr = Min_Wkl_Min_StreamT - 1.96 * sigma(mod_min)
+         )
+
+load("baseline_stream_temp_wtrshd.RData")
+
+bslne_CI <- baseline_stream_temp %>% 
+  mutate(max_upr = Max_Wkl_Max_StreamT + 1.96 * sigma(mod_max),
+         mean_upr = Max_Wkly_Mean_StreamT + 1.96 * sigma(mod_mean),
+         min_upr = Min_Wkl_Min_StreamT + 1.96 * sigma(mod_min),
+         max_lwr = Max_Wkl_Max_StreamT  - 1.96 * sigma(mod_max),
+         mean_lwr = Max_Wkly_Mean_StreamT - 1.96 * sigma(mod_mean),
+         min_lwr = Min_Wkl_Min_StreamT - 1.96 * sigma(mod_min)
+         )
+
+
+
+```
+
+In this next chunk of code, we will summarize the data by year, and then by watershed and year, and plot the trendlines
+
+```{r}
+
+yr <- fut_CI %>% 
+  group_by(year) %>% 
+  summarise(
+    avg = mean(Max_Wkly_Mean_StreamT),
+    min = mean(Min_Wkl_Min_StreamT),
+    max = mean(Max_Wkl_Max_StreamT),
+    mean_upr = mean(mean_upr),
+    min_upr = mean(min_upr),
+    max_upr = mean(max_upr),
+    mean_lwr = mean(mean_lwr),
+    min_lwr = mean(min_lwr),
+    max_lwr = mean(max_lwr)
+  ) %>% 
+  ungroup()
+
+
+watershds <- fut_CI %>% 
+  group_by(watershed, year) %>% 
+  summarise(
+    avg = mean(Max_Wkly_Mean_StreamT),
+    min = mean(Min_Wkl_Min_StreamT),
+    max = mean(Max_Wkl_Max_StreamT),
+    mean_upr = mean(mean_upr),
+    min_upr = mean(min_upr),
+    max_upr = mean(max_upr),
+    mean_lwr = mean(mean_lwr),
+    min_lwr = mean(min_lwr),
+    max_lwr = mean(max_lwr)
+  )%>% 
+  ungroup()
+
+
+```
+
+In this next chunk of code, we will plot the stream temperature metrics by year, and by watershed-year, along with the 95% CI
+
+```{r}
+
+ggplot(data = yr, mapping = aes(x = year, y = avg)) + 
+  geom_line()+
+  geom_errorbar(data = yr, aes(ymin = mean_lwr, ymax = mean_upr))
 
 ```
