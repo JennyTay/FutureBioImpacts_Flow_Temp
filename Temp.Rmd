@@ -73,7 +73,7 @@ load("fut_strm_tmp.RData")
 
 ```
 
-In this next chunk of code, we will make a watershed to COMID conversion file, so we can summarize by watershed
+In this next chunk of code, we will make a watershed and elevation to COMID conversion file, so we can summarize by watershed or elevation
 ```{r}
 NHD <- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16-18/NHDFLowline_Clip.shp")  %>% 
   filter(FTYPE == "StreamRiver") %>% 
@@ -85,17 +85,25 @@ wtrshd_bndry<- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16
   st_zm() %>% 
   rename(watershed = NAME)
 
+#assign < 1000ft as low, 1000-5000 as mid, and higher than 5000 as high
+elv <- read.csv("C:/Users/JennyT/Documents/LitReview/RB4/StreamCat/Elevation_Region18.csv") %>% 
+  dplyr::select(COMID, ElevCat) %>% 
+  mutate(elv = ifelse(ElevCat<304.8, "low",
+                      ifelse(ElevCat>=304.8 & ElevCat<1524, "mid", "high")))
+
 flow_wtrshed<- st_transform(NHD, crs = st_crs(wtrshd_bndry))
 flow_wtrshed<- st_join(wtrshd_bndry, flow_wtrshed) %>% data.frame() %>% dplyr::select(-geometry)
 
 
 future <- left_join(future, flow_wtrshed, by = "COMID") %>% 
   filter(!is.na(watershed))
+future <- left_join(future, elv, by = "COMID")
 
 baseline_stream_temp <- left_join(baseline_stream_temp, flow_wtrshed, by = "COMID") %>% 
   filter(!is.na(watershed))
+baseline_stream_temp <- left_join(baseline_stream_temp, elv, by = "COMID")
 
-rm(NHD, wtrshd_bndry)
+rm(NHD, wtrshd_bndry, elv)
 
 save(future, file = "fut_strm_tmp_wtrshd.RData", compress = "xz")
 save(baseline_stream_temp, file = "baseline_stream_temp_wtrshd.RData", compress = "xz")
@@ -147,7 +155,7 @@ ggplot(data = strm_tmp_all, mapping = aes(x = watershed, y = Min_Wkl_Min_StreamT
 ```
 
 
-In this next chunk of code, we will summarize the data by year, and then by watershed and year, and plot the trendlines
+In this next chunk of code, we will summarize the data by year, and then by elevation and year, and plot the trendlines
 
 ```{r}
 
@@ -167,8 +175,8 @@ yr <- strm_tmp_all %>%
   ungroup()
 
 
-watershds <- strm_tmp_all %>% 
-  group_by(watershed, year) %>% 
+elevations <- strm_tmp_all %>% 
+  group_by(elv, year) %>% 
   summarise(
     avg = mean(Max_Wkly_Mean_StreamT),
     min = mean(Min_Wkl_Min_StreamT),
@@ -185,22 +193,108 @@ watershds <- strm_tmp_all %>%
 
 ```
 
-In this next chunk of code, we will plot the stream temperature metrics by year, and by watershed-year, along with the 95% CI
+First, we will plot the stream temperature metrics by year along with the 95% CI. These line graphs show the average stream metric (ie the average value of all the COMIDs) over time.  
 
 ```{r}
-#by year
+
+#maximum 7-day average
+
 ggplot(data = yr, mapping = aes(x = year, y = avg)) + 
+  geom_line(lwd = 2)+
+  geom_smooth(method = "lm")+
+  geom_smooth(data = yr, mapping = aes(x = year, y = mean_upr), method = "lm")+
+  geom_smooth(data = yr, mapping = aes(x = year, y = mean_lwr), method = "lm")+ 
+  theme(panel.grid.major=element_line(colour="grey90"),
+        panel.background = element_blank(),
+        axis.title.x = element_text(size=30), 
+        axis.title.y = element_text(size = 30),
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 20),
+        axis.text.y = element_text(size = 20))+
+  scale_x_continuous(breaks = seq(1980, 2100, by = 10))+
+  scale_y_continuous(breaks = seq(16, 34, by = 2))+
+  labs(x = "Year", y = "Max 7-Day Mean (°C)")
+  
+#maximum 7-day maximum
+
+ggplot(data = yr, mapping = aes(x = year, y = max)) + 
+  geom_line(lwd = 2)+
+  geom_smooth(method = "lm")+
+  geom_smooth(data = yr, mapping = aes(x = year, y = max_upr), method = "lm")+
+  geom_smooth(data = yr, mapping = aes(x = year, y = max_lwr), method = "lm")+ 
+  theme(panel.grid.major=element_line(colour="grey90"),
+        panel.background = element_blank(),
+        axis.title.x = element_text(size=30), 
+        axis.title.y = element_text(size = 30),
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 20),
+        axis.text.y = element_text(size = 20))+
+  scale_x_continuous(breaks = seq(1980, 2100, by = 10))+
+  scale_y_continuous(breaks = seq(22, 40, by = 2))+
+  labs(x = "Year", y = "Max 7-Day Max (°C)")
+
+#minimum 7-day min
+
+ggplot(data = yr, mapping = aes(x = year, y = min)) + 
+  geom_line(lwd = 2)+
+  geom_smooth(method = "lm")+
+  geom_smooth(data = yr, mapping = aes(x = year, y = min_upr), method = "lm")+
+  geom_smooth(data = yr, mapping = aes(x = year, y = min_lwr), method = "lm")+ 
+  theme(panel.grid.major=element_line(colour="grey90"),
+        panel.background = element_blank(),
+        axis.title.x = element_text(size=30), 
+        axis.title.y = element_text(size = 30),
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 20),
+        axis.text.y = element_text(size = 20))+
+  scale_x_continuous(breaks = seq(1980, 2100, by = 10))+
+  scale_y_continuous(breaks = seq(4, 20, by = 2))+
+  labs(x = "Year", y = "Min 7-Day Min (°C)")
+  
+
+```
+
+In this next chunk of code, we will plot the stream temperature metrics by watershed-year, along with the 95% CI
+
+```{r}
+
+ggplot(data = elevations, mapping = aes(x = year, y = max, color = elv)) + 
   geom_line()+
-  geom_errorbar(aes(ymin = mean_lwr, ymax = mean_upr))+
-  geom_smooth(method = "lm")
+  geom_smooth(method = "lm")+
+  geom_smooth(mapping = aes(x = year, y = max_upr), method = "lm", alpha = 0.2)+
+  geom_smooth(mapping = aes(x = year, y = max_lwr), method = "lm", alpha = 0.2)+ 
+  theme(panel.grid.major=element_line(colour="grey90"),
+        panel.background = element_blank(),
+        axis.title.x = element_text(size=30), 
+        axis.title.y = element_text(size = 30),
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 20),
+        axis.text.y = element_text(size = 20))+
+  scale_x_continuous(breaks = seq(1980, 2100, by = 10))+
+  scale_y_continuous(breaks = seq(16, 44, by = 2))+
+  labs(x = "Year", y = "Max 7-Day Max (°C)")
 
+```
 
+In This code chunk, we are going to plot a map of metric changes and make a table of metric changes by elevation.
+for the change, we are going to average all the years in the baseline and in the end-of-centry, and then subtract baseline from end of century. For the table, we will also group by elevation group, in addition to doing overall change.
+```{r}
 
-#by watershed year
-ggplot(data = watershds, mapping = aes(x = year, y = max, color = watershed)) + 
-  geom_line(color = "black")+
-  geom_errorbar(aes(ymin = max_lwr, ymax = max_upr), color = "black")+
-  geom_smooth(method = "lm")
+strm_tmp_chng <- strm_tmp_all %>% 
+  mutate(decade = ifelse(year<2016, "baseline", 
+                         ifelse(year>2016 & year < 2070, "mid", "end"))) %>% 
+  filter(decade %in% c("baseline", "end")) %>% 
+  group_by(COMID, decade) %>% 
+  summarize(max = mean(Max_Wkl_Max_StreamT),
+            min = mean(Min_Wkl_Min_StreamT),
+            avg = mean(Max_Wkly_Mean_StreamT),
+            rng = mean(Max_Wkl_Rng_StreamT),
+            grt30 = mean(Max_Wkl_Max_StreamT_grt_30_)) %>% 
+  ungroup()
 
+chng <- data.frame(
+  "COMID" = unique(strm_tmp_chng$COMID),
+  "max" = strm_tmp_chng$max[strm_tmp_chng$decade=="end"] - strm_tmp_chng$max[strm_tmp_chng$decade=="baseline"],
+  "min" = strm_tmp_chng$min[strm_tmp_chng$decade=="end"] - strm_tmp_chng$min[strm_tmp_chng$decade=="baseline"],
+  "avg" = strm_tmp_chng$avg[strm_tmp_chng$decade=="end"] - strm_tmp_chng$avg[strm_tmp_chng$decade=="baseline"],
+  "rng" = strm_tmp_chng$rng[strm_tmp_chng$decade=="end"] - strm_tmp_chng$rng[strm_tmp_chng$decade=="baseline"],
+  "grt30" = strm_tmp_chng$grt30[strm_tmp_chng$decade=="end"] - strm_tmp_chng$grt30[strm_tmp_chng$decade=="baseline"]
+)
 
 ```
