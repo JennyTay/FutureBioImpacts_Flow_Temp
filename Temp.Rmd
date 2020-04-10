@@ -89,8 +89,7 @@ wtrshd_bndry<- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16
 #assign < 1000ft as low, 1000-5000 as mid, and higher than 5000 as high
 elv <- read.csv("C:/Users/JennyT/Documents/LitReview/RB4/StreamCat/Elevation_Region18.csv") %>% 
   dplyr::select(COMID, ElevCat) %>% 
-  mutate(elv = ifelse(ElevCat<304.8, "low",
-                      ifelse(ElevCat>=304.8 & ElevCat<1524, "mid", "high")))
+  mutate(elv = ifelse(ElevCat<375, "low", "high"))
 
 flow_wtrshed<- st_transform(NHD, crs = st_crs(wtrshd_bndry))
 flow_wtrshed<- st_join(wtrshd_bndry, flow_wtrshed) %>% data.frame() %>% dplyr::select(-geometry)

@@ -5,6 +5,7 @@ date: "April 8, 2020"
 output: html_document
 ---
 
-1. read in the three future temperature projectsion for MIROC CCSM4 and CanESM5  
-2. average the future projections together  
-3. filter for years 2100 (Moderate), 2095 (wet), and 2090 (dry)
+1. baseline flow metrics: 2010 (moderate), 1993 (wet), 2014 (dry)
+2. future GCM averaged flow metrics: 2100 (moderate), 2095 (wet), and 2090 (dry) 
+3. subtract the baseline year comids from the future year comids for each water year type and plot the violin plots of change for the 3 years types. this will replace table 8 and figure 6
+4. table 9 - want to have the categores be high and low elevation instead of watershed. have it by water year type, and then baseline future. have an averaged value across all comids , and include the standard error reported
