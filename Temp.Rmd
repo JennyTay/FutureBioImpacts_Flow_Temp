@@ -8,7 +8,8 @@ output: html_document
 ```{r}
 library(tidyverse)
 library(sf)
-
+library(RColorBrewer)
+library(gridExtra)
 ```
 For temperature, rather than just looking at the three water year types, we will look at all the futur years to show trends.
 1. read in the three future temperature projectsion for MIROC CCSM4 and CanESM5 of the flow metrics
@@ -193,13 +194,22 @@ elevations <- strm_tmp_all %>%
 
 ```
 
-First, we will plot the stream temperature metrics by year along with the 95% CI. These line graphs show the average stream metric (ie the average value of all the COMIDs) over time.  
+First, we will plot the stream temperature metrics by year along with the 95% CI. These line graphs show the average stream metric (ie the average value of all the COMIDs) over time. The lm_eqn function is to add the regression line and R2 value to the plots  
 
 ```{r}
 
-#maximum 7-day average
+lm_eqn <- function(df){
+    m <- lm(y ~ x, df);
+    eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2, 
+         list(a = format(unname(coef(m)[1]), digits = 2),
+              b = format(unname(coef(m)[2]), digits = 2),
+             r2 = format(summary(m)$r.squared, digits = 3)))
+    as.character(as.expression(eq));
+}
 
-ggplot(data = yr, mapping = aes(x = year, y = avg)) + 
+#maximum 7-day average
+y <- yr$avg; x <- yr$year
+a <- ggplot(data = yr, mapping = aes(x = year, y = avg)) + 
   geom_line(lwd = 2)+
   geom_smooth(method = "lm")+
   geom_smooth(data = yr, mapping = aes(x = year, y = mean_upr), method = "lm")+
@@ -209,14 +219,16 @@ ggplot(data = yr, mapping = aes(x = year, y = avg)) +
         axis.title.x = element_text(size=30), 
         axis.title.y = element_text(size = 30),
         axis.text.x = element_text(angle = 45, hjust = 1, size = 20),
-        axis.text.y = element_text(size = 20))+
+        axis.text.y = element_text(size = 20),
+        title = element_text(size = 30))+
   scale_x_continuous(breaks = seq(1980, 2100, by = 10))+
   scale_y_continuous(breaks = seq(16, 34, by = 2))+
-  labs(x = "Year", y = "Max 7-Day Mean (°C)")
+  labs(x = NULL, y = "Temp (°C)", title = "Max 7-Day Mean (°C)")+
+  geom_text(x = 2005, y = 29, label = lm_eqn(df=yr), parse = TRUE, size = 10)
   
 #maximum 7-day maximum
-
-ggplot(data = yr, mapping = aes(x = year, y = max)) + 
+y <- yr$max; x <- yr$year
+b <- ggplot(data = yr, mapping = aes(x = year, y = max)) + 
   geom_line(lwd = 2)+
   geom_smooth(method = "lm")+
   geom_smooth(data = yr, mapping = aes(x = year, y = max_upr), method = "lm")+
@@ -226,14 +238,16 @@ ggplot(data = yr, mapping = aes(x = year, y = max)) +
         axis.title.x = element_text(size=30), 
         axis.title.y = element_text(size = 30),
         axis.text.x = element_text(angle = 45, hjust = 1, size = 20),
-        axis.text.y = element_text(size = 20))+
+        axis.text.y = element_text(size = 20),
+        title = element_text(size = 30))+
   scale_x_continuous(breaks = seq(1980, 2100, by = 10))+
   scale_y_continuous(breaks = seq(22, 40, by = 2))+
-  labs(x = "Year", y = "Max 7-Day Max (°C)")
+  labs(x = NULL, y = "Temp (°C)", title = "Max 7-Day Max (°C)")+
+  geom_text(x = 2005, y = 39, label = lm_eqn(df=yr), parse = TRUE, size = 10)
 
 #minimum 7-day min
-
-ggplot(data = yr, mapping = aes(x = year, y = min)) + 
+y <- yr$min; x <- yr$year
+c <- ggplot(data = yr, mapping = aes(x = year, y = min)) + 
   geom_line(lwd = 2)+
   geom_smooth(method = "lm")+
   geom_smooth(data = yr, mapping = aes(x = year, y = min_upr), method = "lm")+
@@ -243,15 +257,23 @@ ggplot(data = yr, mapping = aes(x = year, y = min)) +
         axis.title.x = element_text(size=30), 
         axis.title.y = element_text(size = 30),
         axis.text.x = element_text(angle = 45, hjust = 1, size = 20),
-        axis.text.y = element_text(size = 20))+
+        axis.text.y = element_text(size = 20),
+        title = element_text(size = 30))+
   scale_x_continuous(breaks = seq(1980, 2100, by = 10))+
   scale_y_continuous(breaks = seq(4, 20, by = 2))+
-  labs(x = "Year", y = "Min 7-Day Min (°C)")
+  labs(x = "Year", y = "Temp (°C)", title = "Min 7-Day Min (°C)")+
+  geom_text(x = 2005, y = 17, label = lm_eqn(df=yr), parse = TRUE, size = 10)
+
+margin = theme(plot.margin = unit(c(5,7,5,5), "mm"))
+p<-arrangeGrob(
+  a + margin, b+ margin, c+ margin,
+  nrow = 3)
+ggsave("stm_tmp_timeseries.tiff", plot = p, dpi = 300, width = 15, height = 25, compression = "lzw")
   
 
 ```
 
-In this next chunk of code, we will plot the stream temperature metrics by watershed-year, along with the 95% CI
+In this next chunk of code, we will plot the stream temperature metrics by elev-year, along with the 95% CI
 
 ```{r}
 
@@ -272,8 +294,8 @@ ggplot(data = elevations, mapping = aes(x = year, y = max, color = elv)) +
 
 ```
 
-In This code chunk, we are going to plot a map of metric changes and make a table of metric changes by elevation.
-for the change, we are going to average all the years in the baseline and in the end-of-centry, and then subtract baseline from end of century. For the table, we will also group by elevation group, in addition to doing overall change.
+In This code chunk, we are going to plot a map of metric changes and plot the distrubiton of metric changes by elevation.
+for the change, we are going to average all the years in the baseline and in the end-of-centry, and then subtract baseline from end of century. The violin plots show the distribution of changes for each COMID in the different elevation classifications. these plots dont show CI, instead they show the mean change values for each comid, averaged over the entire baseline period, and the entire end of century period. 
 ```{r}
 
 strm_tmp_chng <- strm_tmp_all %>% 
@@ -296,5 +318,103 @@ chng <- data.frame(
   "rng" = strm_tmp_chng$rng[strm_tmp_chng$decade=="end"] - strm_tmp_chng$rng[strm_tmp_chng$decade=="baseline"],
   "grt30" = strm_tmp_chng$grt30[strm_tmp_chng$decade=="end"] - strm_tmp_chng$grt30[strm_tmp_chng$decade=="baseline"]
 )
+
+#join back with NHD so that we can plot it spatially
+NHD <- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16-18/NHDFLowline_Clip.shp") %>% 
+  filter(FTYPE == "StreamRiver") %>% 
+  dplyr::select(COMID)
+chng <- left_join(NHD, chng, by = "COMID") %>% 
+  filter(!is.na(max))
+
+wtrshd_bndry<- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16-18/RB4watershedBoundaty.shp") %>% 
+  dplyr::select(NAME) %>% 
+  st_zm() 
+wtrshd_bndry<- st_transform(wtrshd_bndry, crs = st_crs(chng))
+
+myPalette <- colorRampPalette(brewer.pal(9, "Greys"))
+
+a <- ggplot(data = chng, aes(col=chng$max)) +
+  geom_sf(data = wtrshd_bndry, fill = "white", color = gray(.3), lwd = 1) +
+  geom_sf()+
+  scale_color_gradientn(colours = myPalette(100), limits = c(min(chng$max), max(chng$max)))+
+  labs(col = "°C") +  ggtitle("(A)", subtitle = "Max 7-day maximum") + 
+  theme(panel.grid.major=element_line(colour="transparent"),panel.background = element_blank(),
+        axis.text = element_blank(),axis.ticks = element_blank(),
+        text = element_text(size=30))
+b <- ggplot(data = chng, aes(col=chng$min)) +
+  geom_sf(data = wtrshd_bndry, fill = "white", color = gray(.3), lwd = 1) +
+  geom_sf()+
+  scale_color_gradientn(colours = myPalette(100), limits = c(min(chng$min), max(chng$min)))+
+  labs(col = "°C") +  ggtitle(label = "(B)", subtitle = "Min 7-day minimum") + 
+  theme(panel.grid.major=element_line(colour="transparent"),panel.background = element_blank(),
+        axis.text = element_blank(),axis.ticks = element_blank(),
+        text = element_text(size=30))
+c <- ggplot(data = chng, aes(col=chng$avg)) +
+  geom_sf(data = wtrshd_bndry, fill = "white", color = gray(.3), lwd = 1) +
+  geom_sf()+
+  scale_color_gradientn(colours = myPalette(100), limits = c(min(chng$avg), max(chng$avg)))+
+  labs(col = "°C") +  ggtitle(label = "(C)", subtitle = "Max 7-day average") + 
+  theme(panel.grid.major=element_line(colour="transparent"),panel.background = element_blank(),
+        axis.text = element_blank(),axis.ticks = element_blank(),
+        text = element_text(size=30))
+d <- ggplot(data = chng, aes(col=chng$rng)) +
+  geom_sf(data = wtrshd_bndry, fill = "white", color = gray(.3), lwd = 1) +
+  geom_sf()+
+  scale_color_gradientn(colours = myPalette(100), limits = c(min(chng$rng), max(chng$rng)))+
+  labs(col = "°C") +  ggtitle(label = "(D)", subtitle = "Max 7-day range") + 
+  theme(panel.grid.major=element_line(colour="transparent"),panel.background = element_blank(),
+        axis.text = element_blank(),axis.ticks = element_blank(),
+        text = element_text(size=30))
+e <- ggplot(data = chng, aes(col=chng$grt30)) +
+  geom_sf(data = wtrshd_bndry, fill = "white", color = gray(.3), lwd = 1) +
+  geom_sf()+
+  scale_color_gradientn(colours = myPalette(100), limits = c(min(chng$grt30), max(chng$grt30)))+
+  labs(col = "days") +  ggtitle(label = "(E)", subtitle = "Greater than 30°C") + 
+  theme(panel.grid.major=element_line(colour="transparent"),panel.background = element_blank(),
+        axis.text = element_blank(),axis.ticks = element_blank(),
+        text = element_text(size=30))
+
+comid_elv <- strm_tmp_all %>% 
+  select(COMID, elv) %>% unique
+chng <- left_join(chng, comid_elv, by = "COMID")
+
+f <- ggplot(chng, aes(x = factor(elv, levels = c("low", "mid", "high")), y = max))+
+  geom_violin()+geom_boxplot(width = .08)+
+  labs(y="Temp (°C)", x = "Elevation group")+
+  ggtitle("(F)", subtitle = "Max 7-day max")+ 
+  theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
+g <- ggplot(chng, aes(x = factor(elv, levels = c("low", "mid", "high")), y = min))+
+  geom_violin()+geom_boxplot(width = .08)+
+  labs(y="Temp (°C)", x = NULL)+
+  ggtitle("(G)", subtitle = "Min 7-day min")+ 
+  theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
+h <- ggplot(chng, aes(x = factor(elv, levels = c("low", "mid", "high")), y = avg))+
+  geom_violin()+geom_boxplot(width = .08)+
+  labs(y="Temp (°C)", x = NULL)+
+  ggtitle("(H)", subtitle = "Max 7-day average")+ 
+  theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
+i <- ggplot(chng, aes(x = factor(elv, levels = c("low", "mid", "high")), y = rng))+
+  geom_violin()+geom_boxplot(width = .08)+
+  labs(y="Temp (°C)", x = NULL)+
+  ggtitle("(I)", subtitle = "Max 7-day range")+ 
+  theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
+j <- ggplot(chng, aes(x = factor(elv, levels = c("low", "mid", "high")), y = grt30))+
+  geom_violin()+geom_boxplot(width = .08)+
+  labs(y="Days", x = NULL)+
+  ggtitle("(J)", subtitle = "Greater than 30°C")+ 
+  theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
+
+
+margin = theme(plot.margin = unit(c(5,5,5,5), "mm"))
+p<-arrangeGrob(
+  a + margin, f+ margin, b+ margin, g+ margin, 
+  c+ margin, h + margin, d+ margin, i+ margin, e+ margin, 
+  j+ margin, nrow = 5)
+ggsave("stm_tmp_chng.tiff", plot = p, dpi = 300, width = 15, height = 25, compression = "lzw")
 
 ```
