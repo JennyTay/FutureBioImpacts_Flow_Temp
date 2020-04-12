@@ -87,9 +87,11 @@ wtrshd_bndry<- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16
   rename(watershed = NAME)
 
 #assign < 1000ft as low, 1000-5000 as mid, and higher than 5000 as high
-elv <- read.csv("C:/Users/JennyT/Documents/LitReview/RB4/StreamCat/Elevation_Region18.csv") %>% 
-  dplyr::select(COMID, ElevCat) %>% 
-  mutate(elv = ifelse(ElevCat<375, "low", "high"))
+# elv <- read.csv("C:/Users/JennyT/Documents/LitReview/RB4/StreamCat/Elevation_Region18.csv") %>% 
+#   dplyr::select(COMID, ElevCat) %>% 
+#   mutate(elv = ifelse(ElevCat<375, "low", "high"))
+# save(elv, file = "elv_comid.RData")
+load("elv_comid.RData")
 
 flow_wtrshed<- st_transform(NHD, crs = st_crs(wtrshd_bndry))
 flow_wtrshed<- st_join(wtrshd_bndry, flow_wtrshed) %>% data.frame() %>% dplyr::select(-geometry)
@@ -144,15 +146,6 @@ strm_tmp_all <- rbind(bslne_CI, fut_CI)
 
 ```
 
-Here well do box plots
-
-```{r}
-
-
-ggplot(data = strm_tmp_all, mapping = aes(x = watershed, y = Min_Wkl_Min_StreamT, group= as.factor(watershed)))+
-  geom_violin()
-
-```
 
 
 In this next chunk of code, we will summarize the data by year, and then by elevation and year, and plot the trendlines
@@ -318,16 +311,25 @@ chng <- data.frame(
   "grt30" = strm_tmp_chng$grt30[strm_tmp_chng$decade=="end"] - strm_tmp_chng$grt30[strm_tmp_chng$decade=="baseline"]
 )
 
+
+
 #join back with NHD so that we can plot it spatially
-NHD <- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16-18/NHDFLowline_Clip.shp") %>% 
-  filter(FTYPE == "StreamRiver") %>% 
-  dplyr::select(COMID)
+# NHD <- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16-18/NHDFLowline_Clip.shp") %>% 
+#   filter(FTYPE == "StreamRiver") %>% 
+#   dplyr::select(COMID)
+# save(NHD, file = "NHD_strm_rvr_map.RData")
+load("NHD_strm_rvr_map.RData")
 chng <- left_join(NHD, chng, by = "COMID") %>% 
   filter(!is.na(max))
 
-wtrshd_bndry<- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16-18/RB4watershedBoundaty.shp") %>% 
-  dplyr::select(NAME) %>% 
-  st_zm() 
+save(chng, file = "tmp_metrics_change.RData")
+load("tmp_metrics_change.RData")
+
+# wtrshd_bndry<- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16-18/RB4watershedBoundaty.shp") %>% 
+#   dplyr::select(NAME) %>% 
+#   st_zm() 
+# save(wtrshd_bndry, file = "wtrshd_bundry.RData")
+load("wtrshd_bundry.RData")
 wtrshd_bndry<- st_transform(wtrshd_bndry, crs = st_crs(chng))
 
 myPalette <- colorRampPalette(brewer.pal(9, "Greys"))
