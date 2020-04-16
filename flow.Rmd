@@ -5,6 +5,110 @@ date: "April 8, 2020"
 output: html_document
 ---
 
+
+```{r}
+
+library(tidyverse)
+library(lubridate)
+
+
+
+```
+
+
+
+First, we want to determine the water year types that we chose in the baseline. first group by wateryear and then sum total precip. Then calculte the percentiles of the selected baseline yeras
+
+```{r}
+load("L:/Flow ecology and climate change_ES/Marcus/flowmetrics/data/bsext.RData")
+
+baseline_prcip <- bsext %>% 
+  mutate(year = year(date), 
+         month = month(date),
+         water_yr = ifelse(month>=10, year+1, year)) %>% 
+  group_by(water_yr) %>% 
+  summarise(total = sum(dly_prp)) %>% 
+  ungroup() %>% 
+  mutate(rank = min_rank(total))
+
+low <- quantile(baseline_prcip$total, probs = 0.33)
+med <- quantile(baseline_prcip$total, probs = 0.66)
+
+
+baseline_prcip <- baseline_prcip %>% 
+  mutate(third = ifelse(total<=low, 1,
+                        ifelse(total>low & total<= med, 2, 3))) %>% 
+  arrange(third, rank)
+
+
+```
+
+Look at the future years to determine the annual preciptitiaon percentiles in the water years we selected
+
+```{r}
+load("L:/Flow ecology and climate change_ES/Marcus/flowmetrics/data/CanESM2ext.Rdata")
+load("L:/Flow ecology and climate change_ES/Marcus/flowmetrics/data/CCSM4ext.Rdata")
+load("L:/Flow ecology and climate change_ES/Marcus/flowmetrics/data/MIROC5ext.Rdata")
+
+head(CCSM4ext)
+head(CanESM2ext)
+head(MIROC5ext)
+
+#average the future daily precip projections across the three GCMs-------------------
+
+mean_dly_prp <- (MIROC5ext$dly_prp + CanESM2ext$dly_prp + CCSM4ext$dly_prp) / 3
+
+avg <- data.frame("year" = year(MIROC5ext$date), 
+                  "month" = month(MIROC5ext$date), 
+                  "day" = day(MIROC5ext$date), 
+                  "COMID" = MIROC5ext$COMID, 
+                  "dly_prp" = mean_dly_prp)
+
+#Water year function
+water_yr <- function(year, month){
+  ifelse(month >= 10, year + 1, year)
+}
+
+avg$wateryr <- water_yr(year = avg$year, month = avg$month)
+
+str(avg)
+
+#total preip in each comid per year
+avg <- avg %>% 
+  group_by(COMID, wateryr) %>% 
+  summarise(annl_prp = sum(dly_prp)) %>% 
+  ungroup()
+
+#sum the total annual precip across all locations
+avg <- avg %>% 
+  group_by(wateryr) %>% 
+  summarise(annl_prp_sum = sum(annl_prp)) %>% 
+  ungroup()
+
+unique(avg$wateryr)
+
+#remove the ealier decades and 1982 because only half a year
+avg <- avg %>% 
+  filter(wateryr >= 2083) 
+
+plot(avg$wateryr, avg$annl_prp_sum, type = "l")
+
+#rank the precipitation amount
+avg$rank <- min_rank(avg$annl_prp_sum)
+
+#take period of record, sort by lowest to highest, highest 3rd would be wet, middle and lower.
+first_third <- quantile(avg$annl_prp_sum, probs = 0.33)
+secon_third <- quantile(avg$annl_prp_sum, probs = 0.66)
+avg$third <- ifelse(avg$annl_prp_sum <=first_third, 1,
+                    ifelse(avg$annl_prp_sum >= first_third & avg$annl_prp_sum <= secon_third, 2, 3))
+
+# 2095 is the 2nd wet year
+# 2090 is the dry wateryr, 
+# 2100 is the moderate wateryr 
+
+```
+
+
 1. baseline flow metrics: 2010 (moderate), 1993 (wet), 2014 (dry)
 2. future GCM averaged flow metrics: 2100 (moderate), 2095 (wet), and 2090 (dry) 
 3. subtract the baseline year comids from the future year comids for each water year type and plot the violin plots of change for the 3 years types. this will replace table 8 and figure 6
