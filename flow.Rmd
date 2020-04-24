@@ -10,7 +10,8 @@ output: html_document
 
 library(tidyverse)
 library(lubridate)
-
+library(sf)
+library(gridExtra)
 
 
 ```
@@ -109,6 +110,128 @@ avg$third <- ifelse(avg$annl_prp_sum <=first_third, 1,
 ```
 
 
+
+In the next code chunks, we want to calutate, tabulate, and plot the change in 5 hydrologic metrics from baseline to future.
+
+first we will read in the baseline flow metrics and the future flow metrics
+```{r}
+NHD <- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16-18/NHDFLowline_Clip.shp")  %>% 
+  filter(FTYPE == "StreamRiver") %>% 
+  dplyr::select(COMID) %>% 
+  st_zm()
+
+clusters<- st_read("C:/Users/JennyT/Documents/LitReview/RB4/StreamCat/COMID clustering.shp") %>% 
+  data.frame() %>% 
+  select(COMID, clstrCt, dam) %>% 
+  filter(clstrCt == 1 & dam == 0 )
+
+load("elv_comid.RData")
+
+
+#baseline
+load("bsflowmetest.RData")
+baseline <- bsflowmetest %>% 
+  select(var, COMID, dtsl, est) %>% 
+  filter(var %in% c("x3_Hydroperiod", "x3_Q99", "x3_SFR", "x3_LowDur", "x3_HighNum"),
+         COMID %in% clusters$COMID) %>% 
+  mutate(year = year(dtsl),
+         time = "baseline",
+         type = ifelse(year ==1993, "wet",
+                       ifelse(year == 2010, "mod", "dry"))) %>% 
+  spread(var, est)
+
+#future
+load("flowmetdt2.RData")
+future <- flowmetdt2 %>% 
+  select(var, COMID, dtsl, est) %>% 
+  filter(var %in% c("x3_Hydroperiod", "x3_Q99", "x3_SFR", "x3_LowDur", "x3_HighNum"),
+         COMID %in% clusters$COMID) %>% 
+  mutate(year = year(dtsl),
+         time = "future",
+         type = ifelse(year ==2095, "wet",
+                       ifelse(year == 2100, "mod", "dry"))) %>% 
+  spread(var, est)
+
+flow <- bind_rows(baseline, future)
+flow <- left_join(flow, elv, by = "COMID")
+
+save(flow, file = "flowmet_all.RData")
+
+
+
+```
+
+
+in this next chunk of code, we will plot the means for each year type, baseline to future
+```{r}
+
+load("flowmet_all.RData")
+
+
+a <- ggplot(data = flow, mapping = aes(x = factor(type, levels = c("dry", "mod", "wet")), y = x3_HighNum, fill = time))+
+  geom_boxplot()+ scale_fill_manual(values=c("blue3", "darkorange3"))+
+  labs(y="Number of Storms", x = NULL)+
+  ggtitle("(A)")+ 
+  theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), 
+        legend.title = element_blank(), legend.position = c(.225, 1),
+    legend.justification = c("right", "top"),legend.box.background = element_rect(color="black", size=.5),
+    legend.box.margin = margin(2, 2, 2, 2))
+
+b <- ggplot(data = flow, mapping = aes(x = factor(type, levels = c("dry", "mod", "wet")), y = x3_LowDur, fill = time))+
+  geom_boxplot()+ scale_fill_manual(values=c("blue3", "darkorange3"))+
+  labs(y="Low Duration", x = NULL)+
+  ggtitle("(B)")+ 
+  theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none")
+
+c <- ggplot(data = flow, mapping = aes(x = factor(type, levels = c("dry", "mod", "wet")), y = x3_Hydroperiod, fill = time))+
+  geom_boxplot()+ scale_fill_manual(values=c("blue3", "darkorange3"))+
+  labs(y="Hydroperiod", x = NULL)+
+  ggtitle("(C)")+ 
+  theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5),legend.position = "none")
+
+d <- ggplot(data = flow, mapping = aes(x = factor(type, levels = c("dry", "mod", "wet")), y = x3_Q99, fill = time))+
+  geom_boxplot()+ scale_fill_manual(values=c("blue3", "darkorange3"))+
+  labs(y="Q99", x = NULL)+
+  ggtitle("(D)")+ 
+  theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none")
+
+e <- ggplot(data = flow, mapping = aes(x = factor(type, levels = c("dry", "mod", "wet")), y = x3_SFR, fill = time))+
+  geom_boxplot()+ scale_fill_manual(values=c("blue3", "darkorange3"))+
+  labs(y="SFR", x = "Water Year Type")+
+  ggtitle("(E)")+ 
+  theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none")
+
+
+margin = theme(plot.margin = unit(c(5,7,5,5), "mm"))
+p<-arrangeGrob(
+  a + margin, b+ margin, c+ margin, d + margin, e + margin,
+  nrow = 5)
+ggsave("flowMetChng.tiff", plot = p, dpi = 300, width = 10, height = 25, compression = "lzw")
+  
+  
+
+```
+
+
+
+Make a table of change for each year type and each elevation
+
+```{r}
+
+flow_sum <- flow %>%
+  group_by(type, elv) %>% 
+  summarize(HiNuChg_mn = mean(x3_HighNum[time == "future"]-x3_HighNum[time == "baseline"], na.rm = T),
+            HiNuChg_05 = quantile(x3_HighNum[time == "future"]-x3_HighNum[time == "baseline"], na.rm = T, probs = 0.05),
+            HiNuChg_95 = quantile(x3_HighNum[time == "future"]-x3_HighNum[time == "baseline"], na.rm = T, probs = 0.95))
+
+
+
+```
 1. baseline flow metrics: 2010 (moderate), 1993 (wet), 2014 (dry)
 2. future GCM averaged flow metrics: 2100 (moderate), 2095 (wet), and 2090 (dry) 
 3. subtract the baseline year comids from the future year comids for each water year type and plot the violin plots of change for the 3 years types. this will replace table 8 and figure 6
