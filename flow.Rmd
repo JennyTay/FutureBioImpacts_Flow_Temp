@@ -162,7 +162,7 @@ save(flow, file = "flowmet_all.RData")
 ```
 
 
-in this next chunk of code, we will plot the means for each year type, baseline to future
+in this next chunk of code, we will plot the distributions of COMIDs for each year type, baseline to future
 ```{r}
 
 load("flowmet_all.RData")
@@ -181,35 +181,38 @@ a <- ggplot(data = flow, mapping = aes(x = factor(type, levels = c("dry", "mod",
 b <- ggplot(data = flow, mapping = aes(x = factor(type, levels = c("dry", "mod", "wet")), y = x3_LowDur, fill = time))+
   geom_boxplot()+ scale_fill_manual(values=c("blue3", "darkorange3"))+
   labs(y="Low Duration", x = NULL)+
-  ggtitle("(B)")+ 
+  ggtitle("(C)")+ 
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none")
 
 c <- ggplot(data = flow, mapping = aes(x = factor(type, levels = c("dry", "mod", "wet")), y = x3_Hydroperiod, fill = time))+
   geom_boxplot()+ scale_fill_manual(values=c("blue3", "darkorange3"))+
   labs(y="Hydroperiod", x = NULL)+
-  ggtitle("(C)")+ 
+  ggtitle("(D)")+ 
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5),legend.position = "none")
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5),legend.position = "none")+
+  facet_wrap(facets=vars(elv))
 
 d <- ggplot(data = flow, mapping = aes(x = factor(type, levels = c("dry", "mod", "wet")), y = x3_Q99, fill = time))+
   geom_boxplot()+ scale_fill_manual(values=c("blue3", "darkorange3"))+
   labs(y="Q99", x = NULL)+
-  ggtitle("(D)")+ 
+  ggtitle("(B)")+ 
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none")
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none")+
+  facet_wrap(facets=vars(elv))
 
 e <- ggplot(data = flow, mapping = aes(x = factor(type, levels = c("dry", "mod", "wet")), y = x3_SFR, fill = time))+
   geom_boxplot()+ scale_fill_manual(values=c("blue3", "darkorange3"))+
   labs(y="SFR", x = "Water Year Type")+
   ggtitle("(E)")+ 
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none")
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none")+
+  facet_wrap(facets=vars(elv))
 
 
 margin = theme(plot.margin = unit(c(5,7,5,5), "mm"))
 p<-arrangeGrob(
-  a + margin, b+ margin, c+ margin, d + margin, e + margin,
+  a + margin, d+ margin, b+ margin, c + margin, e + margin,
   nrow = 5)
 ggsave("flowMetChng.tiff", plot = p, dpi = 300, width = 10, height = 25, compression = "lzw")
   
@@ -222,16 +225,165 @@ ggsave("flowMetChng.tiff", plot = p, dpi = 300, width = 10, height = 25, compres
 Make a table of change for each year type and each elevation
 
 ```{r}
-
+#table for year type and elevation
 flow_sum <- flow %>%
   group_by(type, elv) %>% 
-  summarize(HiNuChg_mn = mean(x3_HighNum[time == "future"]-x3_HighNum[time == "baseline"], na.rm = T),
-            HiNuChg_05 = quantile(x3_HighNum[time == "future"]-x3_HighNum[time == "baseline"], na.rm = T, probs = 0.05),
-            HiNuChg_95 = quantile(x3_HighNum[time == "future"]-x3_HighNum[time == "baseline"], na.rm = T, probs = 0.95))
+  summarize(HiNuChg_mn = round(mean(x3_HighNum[time == "future"]-x3_HighNum[time == "baseline"], na.rm = T), 2),
+            HiNuChg_05 = round(quantile(x3_HighNum[time == "future"]-x3_HighNum[time == "baseline"], na.rm = T, probs = 0.05), 2),
+            HiNuChg_95 = round(quantile(x3_HighNum[time == "future"]-x3_HighNum[time == "baseline"], na.rm = T, probs = 0.95), 2),
+            LoDuChg_mn = round(mean(x3_LowDur[time == "future"]-x3_LowDur[time == "baseline"], na.rm = T), 0),
+            LoDuChg_05 = round(quantile(x3_LowDur[time == "future"]-x3_LowDur[time == "baseline"], na.rm = T, probs = 0.05), 0),
+            LoDuChg_95 = round(quantile(x3_LowDur[time == "future"]-x3_LowDur[time == "baseline"], na.rm = T, probs = 0.95), 0),
+            Q99_mn = round(mean(x3_Q99[time == "future"]-x3_Q99[time == "baseline"], na.rm = T), 0),
+            Q99_05 = round(quantile(x3_Q99[time == "future"]-x3_Q99[time == "baseline"], na.rm = T, probs = 0.05), 0),
+            Q99_95 = round(quantile(x3_Q99[time == "future"]-x3_Q99[time == "baseline"], na.rm = T, probs = 0.95), 0),
+            Hydrop_mn = round(mean(x3_Hydroperiod[time == "future"]-x3_Hydroperiod[time == "baseline"], na.rm = T), 2),
+            Hydrop_05 = round(quantile(x3_Hydroperiod[time == "future"]-x3_Hydroperiod[time == "baseline"], na.rm = T, probs = 0.05), 2),
+            Hydrop_95 = round(quantile(x3_Hydroperiod[time == "future"]-x3_Hydroperiod[time == "baseline"], na.rm = T, probs = 0.95), 2),
+            SFR_mn = round(mean(x3_SFR[time == "future"]-x3_SFR[time == "baseline"], na.rm = T), 2),
+            SFR_05 = round(quantile(x3_SFR[time == "future"]-x3_SFR[time == "baseline"], na.rm = T, probs = 0.05), 2),
+            SFR_95 = round(quantile(x3_SFR[time == "future"]-x3_SFR[time == "baseline"], na.rm = T, probs = 0.95), 2))
+
+flow_sum <- data.frame(
+  "type" = flow_sum$type,
+  "elv" = flow_sum$elv,
+  "HigNum" = paste(flow_sum$HiNuChg_mn, " (", flow_sum$HiNuChg_05, ",", flow_sum$HiNuChg_95,  ") ", sep = ""),
+  "LowDur" = paste(flow_sum$LoDuChg_mn, " (", flow_sum$LoDuChg_05, ",", flow_sum$LoDuChg_95,  ") ", sep = ""),
+  "Q99" = paste(flow_sum$Q99_mn, " (", flow_sum$Q99_05, ",", flow_sum$Q99_95,  ") ", sep = ""),
+  "Hydroperiod" = paste(flow_sum$Hydrop_mn, " (", flow_sum$Hydrop_05, ",", flow_sum$Hydrop_95,  ") ", sep = ""),
+  "SFR" = paste(flow_sum$SFR_mn, " (", flow_sum$SFR_05, ",", flow_sum$SFR_95,  ") ", sep = "")
+)
+
+flow_sum <- t(flow_sum)
+
+write.csv(flow_sum, file = "flowMetrChng_type_elv.csv")
+
+#table for year type alone
+flow_sum <- flow %>%
+  group_by(type) %>% 
+  summarize(HiNuChg_mn = round(mean(x3_HighNum[time == "future"]-x3_HighNum[time == "baseline"], na.rm = T), 2),
+            HiNuChg_05 = round(quantile(x3_HighNum[time == "future"]-x3_HighNum[time == "baseline"], na.rm = T, probs = 0.05), 2),
+            HiNuChg_95 = round(quantile(x3_HighNum[time == "future"]-x3_HighNum[time == "baseline"], na.rm = T, probs = 0.95), 2),
+            LoDuChg_mn = round(mean(x3_LowDur[time == "future"]-x3_LowDur[time == "baseline"], na.rm = T), 0),
+            LoDuChg_05 = round(quantile(x3_LowDur[time == "future"]-x3_LowDur[time == "baseline"], na.rm = T, probs = 0.05), 0),
+            LoDuChg_95 = round(quantile(x3_LowDur[time == "future"]-x3_LowDur[time == "baseline"], na.rm = T, probs = 0.95), 0),
+            Q99_mn = round(mean(x3_Q99[time == "future"]-x3_Q99[time == "baseline"], na.rm = T), 0),
+            Q99_05 = round(quantile(x3_Q99[time == "future"]-x3_Q99[time == "baseline"], na.rm = T, probs = 0.05), 0),
+            Q99_95 = round(quantile(x3_Q99[time == "future"]-x3_Q99[time == "baseline"], na.rm = T, probs = 0.95), 0),
+            Hydrop_mn = round(mean(x3_Hydroperiod[time == "future"]-x3_Hydroperiod[time == "baseline"], na.rm = T), 2),
+            Hydrop_05 = round(quantile(x3_Hydroperiod[time == "future"]-x3_Hydroperiod[time == "baseline"], na.rm = T, probs = 0.05), 2),
+            Hydrop_95 = round(quantile(x3_Hydroperiod[time == "future"]-x3_Hydroperiod[time == "baseline"], na.rm = T, probs = 0.95), 2),
+            SFR_mn = round(mean(x3_SFR[time == "future"]-x3_SFR[time == "baseline"], na.rm = T), 2),
+            SFR_05 = round(quantile(x3_SFR[time == "future"]-x3_SFR[time == "baseline"], na.rm = T, probs = 0.05), 2),
+            SFR_95 = round(quantile(x3_SFR[time == "future"]-x3_SFR[time == "baseline"], na.rm = T, probs = 0.95), 2))
+
+flow_sum <- data.frame(
+  "type" = flow_sum$type,
+  "HigNum" = paste(flow_sum$HiNuChg_mn, " (", flow_sum$HiNuChg_05, ",", flow_sum$HiNuChg_95,  ") ", sep = ""),
+  "LowDur" = paste(flow_sum$LoDuChg_mn, " (", flow_sum$LoDuChg_05, ",", flow_sum$LoDuChg_95,  ") ", sep = ""),
+  "Q99" = paste(flow_sum$Q99_mn, " (", flow_sum$Q99_05, ",", flow_sum$Q99_95,  ") ", sep = ""),
+  "Hydroperiod" = paste(flow_sum$Hydrop_mn, " (", flow_sum$Hydrop_05, ",", flow_sum$Hydrop_95,  ") ", sep = ""),
+  "SFR" = paste(flow_sum$SFR_mn, " (", flow_sum$SFR_05, ",", flow_sum$SFR_95,  ") ", sep = "")
+)
+
+flow_sum <- t(flow_sum)
+
+write.csv(flow_sum, file = "flowMetrChng_type.csv")
 
 
+#table for elv type alone
+flow_sum <- flow %>%
+  group_by(elv) %>% 
+  summarize(HiNuChg_mn = round(mean(x3_HighNum[time == "future"]-x3_HighNum[time == "baseline"], na.rm = T), 2),
+            HiNuChg_05 = round(quantile(x3_HighNum[time == "future"]-x3_HighNum[time == "baseline"], na.rm = T, probs = 0.05), 2),
+            HiNuChg_95 = round(quantile(x3_HighNum[time == "future"]-x3_HighNum[time == "baseline"], na.rm = T, probs = 0.95), 2),
+            LoDuChg_mn = round(mean(x3_LowDur[time == "future"]-x3_LowDur[time == "baseline"], na.rm = T), 0),
+            LoDuChg_05 = round(quantile(x3_LowDur[time == "future"]-x3_LowDur[time == "baseline"], na.rm = T, probs = 0.05), 0),
+            LoDuChg_95 = round(quantile(x3_LowDur[time == "future"]-x3_LowDur[time == "baseline"], na.rm = T, probs = 0.95), 0),
+            Q99_mn = round(mean(x3_Q99[time == "future"]-x3_Q99[time == "baseline"], na.rm = T), 0),
+            Q99_05 = round(quantile(x3_Q99[time == "future"]-x3_Q99[time == "baseline"], na.rm = T, probs = 0.05), 0),
+            Q99_95 = round(quantile(x3_Q99[time == "future"]-x3_Q99[time == "baseline"], na.rm = T, probs = 0.95), 0),
+            Hydrop_mn = round(mean(x3_Hydroperiod[time == "future"]-x3_Hydroperiod[time == "baseline"], na.rm = T), 2),
+            Hydrop_05 = round(quantile(x3_Hydroperiod[time == "future"]-x3_Hydroperiod[time == "baseline"], na.rm = T, probs = 0.05), 2),
+            Hydrop_95 = round(quantile(x3_Hydroperiod[time == "future"]-x3_Hydroperiod[time == "baseline"], na.rm = T, probs = 0.95), 2),
+            SFR_mn = round(mean(x3_SFR[time == "future"]-x3_SFR[time == "baseline"], na.rm = T), 2),
+            SFR_05 = round(quantile(x3_SFR[time == "future"]-x3_SFR[time == "baseline"], na.rm = T, probs = 0.05), 2),
+            SFR_95 = round(quantile(x3_SFR[time == "future"]-x3_SFR[time == "baseline"], na.rm = T, probs = 0.95), 2))
+
+flow_sum <- data.frame(
+  "elv" = flow_sum$elv,
+  "HigNum" = paste(flow_sum$HiNuChg_mn, " (", flow_sum$HiNuChg_05, ",", flow_sum$HiNuChg_95,  ") ", sep = ""),
+  "LowDur" = paste(flow_sum$LoDuChg_mn, " (", flow_sum$LoDuChg_05, ",", flow_sum$LoDuChg_95,  ") ", sep = ""),
+  "Q99" = paste(flow_sum$Q99_mn, " (", flow_sum$Q99_05, ",", flow_sum$Q99_95,  ") ", sep = ""),
+  "Hydroperiod" = paste(flow_sum$Hydrop_mn, " (", flow_sum$Hydrop_05, ",", flow_sum$Hydrop_95,  ") ", sep = ""),
+  "SFR" = paste(flow_sum$SFR_mn, " (", flow_sum$SFR_05, ",", flow_sum$SFR_95,  ") ", sep = "")
+)
+
+flow_sum <- t(flow_sum)
+
+write.csv(flow_sum, file = "flowMetrChng_elv.csv")
 
 ```
+
+
+In this  code chunk, we want to compare the differences between the range of values in the base line and future years for each year type. for example, we want to know if the water year types are more similar in the future than in the baseline
+```{r}
+
+rng <- flow %>%
+  group_by(time) %>% 
+  summarise(maxHiNum = quantile(x3_HighNum, probs = 0.95, na.rm = T),
+            minHiNum = quantile(x3_HighNum, probs = 0.05, na.rm = T),
+            maxQ99 = quantile(x3_Q99, probs = 0.95, na.rm = T),
+            minQ99 = quantile(x3_Q99, probs = 0.05, na.rm = T),
+            maxLoDur = quantile(x3_LowDur, probs = 0.95, na.rm = T),
+            minLoDur = quantile(x3_LowDur, probs = 0.05, na.rm = T),
+            maxHydro = quantile(x3_Hydroperiod, probs = 0.95, na.rm = T),
+            minHydro = quantile(x3_Hydroperiod, probs = 0.05, na.rm = T),
+            maxSFR = quantile(x3_SFR, probs = 0.95, na.rm = T),
+            minSFR = quantile(x3_SFR, probs = 0.05, na.rm = T)) %>% 
+  ungroup()
+rng <- rng %>% 
+  mutate(HiNumRng = maxHiNum - minHiNum,
+         maxQ99Rng = maxQ99 - minQ99,
+         LoDurRng = maxLoDur - minLoDur,
+         HydroRng = maxHydro - minHydro,
+         SFRRng = abs(maxSFR - minSFR))
+
+prctRngChng <- rng[2,12:16]/rng[1,12:16]
+
+```
+
+In this code chunk, we copare the similarly of year types
+
+```{r}
+similarly <- flow %>%
+  group_by(time, type) %>% 
+  summarize(muHN = round(mean(x3_HighNum, na.rm = T), 2),
+            sdNH  = round(sd(x3_HighNum, na.rm = T), 2),
+            muLD = round(mean(x3_LowDur, na.rm = T), 0),
+            sdLD  = round(sd(x3_LowDur, na.rm = T), 0),
+            mu99 = round(mean(x3_Q99, na.rm = T), 0),
+            sd99 = round(sd(x3_Q99, na.rm = T), 0),
+            muSFR = round(mean(x3_SFR, na.rm = T), 2),
+            sdSFR = round(sd(x3_SFR, na.rm = T), 2),
+            muhyd = round(mean(x3_Hydroperiod, na.rm = T), 2),
+            sdhyd = round(sd(x3_Hydroperiod, na.rm = T), 2))
+
+similarly <- data.frame(
+  "time" = similarly$time,
+  "type" = similarly$type,
+  "highNum" = paste(similarly$muHN, "\u00B1", similarly$sdNH),
+  "Q99" = paste(similarly$mu99, "\u00B1", similarly$sd99),
+  "LoDur" = paste(similarly$muLD, "\u00B1", similarly$sdLD),
+  "Hydroperiod" = paste(similarly$muhyd, "\u00B1", similarly$sdhyd),
+  "SFR" = paste(similarly$muSFR, "\u00B1", similarly$sdSFR)
+)
+
+similarly <- t(similarly)
+write.csv(similarly, file = "YearTypeSimilarly_nowVsFuture.csv")
+
+```
+
 1. baseline flow metrics: 2010 (moderate), 1993 (wet), 2014 (dry)
 2. future GCM averaged flow metrics: 2100 (moderate), 2095 (wet), and 2090 (dry) 
 3. subtract the baseline year comids from the future year comids for each water year type and plot the violin plots of change for the 3 years types. this will replace table 8 and figure 6
