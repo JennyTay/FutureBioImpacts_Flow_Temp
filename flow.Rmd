@@ -169,7 +169,7 @@ load("flowmet_all.RData")
 
 
 a <- ggplot(data = flow, mapping = aes(x = factor(type, levels = c("dry", "mod", "wet")), y = x3_HighNum, fill = time))+
-  geom_boxplot()+ scale_fill_manual(values=c("blue3", "darkorange3"))+
+  geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+
   labs(y="Number of Storms", x = NULL)+
   ggtitle("(A)")+ 
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
@@ -179,35 +179,32 @@ a <- ggplot(data = flow, mapping = aes(x = factor(type, levels = c("dry", "mod",
     legend.box.margin = margin(2, 2, 2, 2))
 
 b <- ggplot(data = flow, mapping = aes(x = factor(type, levels = c("dry", "mod", "wet")), y = x3_LowDur, fill = time))+
-  geom_boxplot()+ scale_fill_manual(values=c("blue3", "darkorange3"))+
+  geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+
   labs(y="Low Duration", x = NULL)+
   ggtitle("(C)")+ 
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none")
 
 c <- ggplot(data = flow, mapping = aes(x = factor(type, levels = c("dry", "mod", "wet")), y = x3_Hydroperiod, fill = time))+
-  geom_boxplot()+ scale_fill_manual(values=c("blue3", "darkorange3"))+
+  geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+
   labs(y="Hydroperiod", x = NULL)+
   ggtitle("(D)")+ 
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5),legend.position = "none")+
-  facet_wrap(facets=vars(elv))
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5),legend.position = "none")
 
 d <- ggplot(data = flow, mapping = aes(x = factor(type, levels = c("dry", "mod", "wet")), y = x3_Q99, fill = time))+
-  geom_boxplot()+ scale_fill_manual(values=c("blue3", "darkorange3"))+
+  geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+
   labs(y="Q99", x = NULL)+
   ggtitle("(B)")+ 
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none")+
-  facet_wrap(facets=vars(elv))
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none")
 
 e <- ggplot(data = flow, mapping = aes(x = factor(type, levels = c("dry", "mod", "wet")), y = x3_SFR, fill = time))+
-  geom_boxplot()+ scale_fill_manual(values=c("blue3", "darkorange3"))+
+  geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+
   labs(y="SFR", x = "Water Year Type")+
   ggtitle("(E)")+ 
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none")+
-  facet_wrap(facets=vars(elv))
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none")
 
 
 margin = theme(plot.margin = unit(c(5,7,5,5), "mm"))
@@ -215,6 +212,32 @@ p<-arrangeGrob(
   a + margin, d+ margin, b+ margin, c + margin, e + margin,
   nrow = 5)
 ggsave("flowMetChng.tiff", plot = p, dpi = 300, width = 10, height = 25, compression = "lzw")
+
+
+
+#this is for the figure of SFR and Hydroperiod
+
+a <- ggplot(data = flow, mapping = aes(x = factor(type, levels = c("dry", "mod", "wet")), y = x3_Hydroperiod, fill = time))+
+  geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+
+  labs(y="Hydroperiod", x = NULL)+
+  theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5),legend.title = element_blank(), legend.position = c(1, 1),
+    legend.justification = c("right", "top"),legend.box.background = element_rect(color="black", size=.5),
+    legend.box.margin = margin(1, 1, 1, 1))+
+  facet_wrap(facets=vars(elv))
+
+b <- ggplot(data = flow, mapping = aes(x = factor(type, levels = c("dry", "mod", "wet")), y = x3_SFR, fill = time))+
+  geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+
+  labs(y="SFR", x = "Water Year Type")+
+  theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none")+
+  facet_wrap(facets=vars(elv))
+
+
+p<-arrangeGrob(
+  a + margin, b + margin,
+  nrow = 2)
+ggsave("flowMetChng_SFR_hydro.tiff", plot = p, dpi = 300, width = 10, height = 10, compression = "lzw")
   
   
 
@@ -258,6 +281,11 @@ flow_sum <- t(flow_sum)
 
 write.csv(flow_sum, file = "flowMetrChng_type_elv.csv")
 
+
+
+
+
+
 #table for year type alone
 flow_sum <- flow %>%
   group_by(type) %>% 
@@ -289,6 +317,10 @@ flow_sum <- data.frame(
 flow_sum <- t(flow_sum)
 
 write.csv(flow_sum, file = "flowMetrChng_type.csv")
+
+
+
+
 
 
 #table for elv type alone
@@ -384,7 +416,39 @@ write.csv(similarly, file = "YearTypeSimilarly_nowVsFuture.csv")
 
 ```
 
-1. baseline flow metrics: 2010 (moderate), 1993 (wet), 2014 (dry)
-2. future GCM averaged flow metrics: 2100 (moderate), 2095 (wet), and 2090 (dry) 
-3. subtract the baseline year comids from the future year comids for each water year type and plot the violin plots of change for the 3 years types. this will replace table 8 and figure 6
-4. table 9 - want to have the categores be high and low elevation instead of watershed. have it by water year type, and then baseline future. have an averaged value across all comids , and include the standard error reported
+
+In this code chunk, we are going to subtract the baseline values from the future values for each variable and run a paired t-test to determine if the change is different than zero.  need to change the variable in the initial select and spread, and then nothing else needs to change.
+
+```{r}
+
+
+hyd <- flow %>% 
+  select(COMID, time, type, x3_SFR, elv) %>% 
+  spread(time, x3_SFR) 
+
+d <-  hyd %>% 
+  filter(elv == "high" & type == "dry")
+t.test(d$future, d$baseline, paired = TRUE)
+
+d <-  hyd %>% 
+  filter(elv == "high" & type == "mod")
+t.test(d$future, d$baseline, paired = TRUE)
+
+d <-  hyd %>% 
+  filter(elv == "high" & type == "wet")
+t.test(d$future, d$baseline, paired = TRUE)
+
+d <-  hyd %>% 
+  filter(elv == "low" & type == "dry")
+t.test(d$future, d$baseline, paired = TRUE)
+
+d <-  hyd %>% 
+  filter(elv == "low" & type == "mod")
+t.test(d$future, d$baseline, paired = TRUE)
+
+d <-  hyd %>% 
+  filter(elv == "low" & type == "wet")
+t.test(d$future, d$baseline, paired = TRUE)
+
+
+```
