@@ -382,8 +382,8 @@ comid_elv <- strm_tmp_all %>%
   select(COMID, elv) %>% unique
 chng <- left_join(chng, comid_elv, by = "COMID")
 
-round(colMeans(chng[chng$elv=="high",2:6]),2)
-round(colMeans(chng[chng$elv=="low",2:6]),2)
+round(colMeans(chng[chng$elv=="high", 2:6]),2)
+round(colMeans(chng[chng$elv=="low", 2:6]),2)
 
 f <- ggplot(chng, aes(x = factor(elv, levels = c("low", "mid", "high")), y = max))+
   geom_violin()+geom_boxplot(width = .08)+
