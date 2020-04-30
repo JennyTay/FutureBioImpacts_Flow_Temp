@@ -326,8 +326,12 @@ chng <- data.frame(
   "grt30" = strm_tmp_chng$grt30[strm_tmp_chng$decade=="end"] - strm_tmp_chng$grt30[strm_tmp_chng$decade=="baseline"]
 )
 
-#calculate row averages to get the average change across GCM and COMID in each metric
+#calculate row averages and percentiles to get the average change across GCM and COMID in each metric
 round(colMeans(chng),2)
+
+round(apply(chng, 2, function (x){
+  quantile(x, probs = 0.95)
+}), 2)
 
 #join back with NHD so that we can plot it spatially
 # NHD <- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16-18/NHDFLowline_Clip.shp") %>% 
@@ -397,6 +401,9 @@ chng <- left_join(chng, comid_elv, by = "COMID")
 
 round(colMeans(chng[chng$elv=="high", 2:6]),2)
 round(colMeans(chng[chng$elv=="low", 2:6]),2)
+t.test(chng[chng$elv=="low", 2], chng[chng$elv=="high", 2])#max
+t.test(chng[chng$elv=="low", 3], chng[chng$elv=="high", 3])#min
+t.test(chng[chng$elv=="low", 4], chng[chng$elv=="high", 4])#avg
 
 f <- ggplot(chng, aes(x = factor(elv, levels = c("low", "mid", "high")), y = max))+
   geom_violin()+geom_boxplot(width = .08)+
