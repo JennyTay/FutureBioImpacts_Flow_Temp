@@ -207,6 +207,13 @@ lm_eqn <- function(df){
     as.character(as.expression(eq));
 }
 
+# expand yr with full NA values
+yr <- seq(min(yr$year), max(yr$year)) %>%
+  tibble(
+    year = .
+  ) %>%
+  left_join(yr, by = 'year')
+
 #maximum 7-day average
 y <- yr$avg; x <- yr$year
 a <- ggplot(data = yr, mapping = aes(x = year, y = avg)) + 
