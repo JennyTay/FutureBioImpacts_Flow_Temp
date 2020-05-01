@@ -1,18 +1,62 @@
 ---
-title: "R Notebook"
-output: html_notebook
+title: "Biology Predictions"
+author: "Jenny Rogers"
+date: "April 30, 2020"
+output: html_document
 ---
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
-
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
-
 ```{r}
-plot(cars)
+
+library(tidyverse)
+library(sf)
+library(lubridate)
+
 ```
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+In this document, we make predictions for the biology using the stream temp and the hydrologic metrics and the already built biological models.
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+In this first code chunk, we read in the random forest models for each spp to predict P(occurrence) based on streamflow, the logistic regession models based on temperature, and the streamflow metric and temperature dataframes
 
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+```{r}
+#models based on streamflow metrics
+load("mod_chub_rf.RData")
+load("mod_vireo_rf.RData")
+load("mod_toad_rf.RData")
+load("mod_turtle_rf.RData")
+load("mod_sucker_rf.RData")
+load("mod_trout_rf.RData")
+
+#models based on temp metrics
+
+#streamflow metric and temp data
+
+clusters<- st_read("C:/Users/JennyT/Documents/LitReview/RB4/StreamCat/COMID clustering.shp") %>% 
+  data.frame() %>% 
+  select(COMID, clstrCt, dam) %>% 
+  filter(clstrCt == 1 & dam == 0 )
+
+load("elv_comid.RData")
+
+#baseline flow
+load("bsflowmetest.RData")
+baseline <- bsflowmetest %>% 
+  select(var, COMID, dtsl, est) %>% 
+  filter(COMID %in% clusters$COMID) %>% 
+  mutate(year = year(dtsl)) %>% 
+  spread(var, est)
+
+#future flow
+load("flowmetdt2.RData")
+future <- flowmetdt2 %>% 
+  select(var, COMID, dtsl, est) %>% 
+  filter(COMID %in% clusters$COMID) %>% 
+  mutate(year = year(dtsl)) %>% 
+  spread(var, est)
+
+flow <- bind_rows(baseline, future)
+flow <- left_join(flow, elv, by = "COMID")
+
+rm(bsflowmetest, flowmetdt2, clusters, baseline, future, elv)
+
+load("tmp_metrics_all.RData")
+```
