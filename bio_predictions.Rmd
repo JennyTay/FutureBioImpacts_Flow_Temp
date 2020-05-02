@@ -15,7 +15,39 @@ library(lubridate)
 
 In this document, we make predictions for the biology using the stream temp and the hydrologic metrics and the already built biological models.
 
+
+```{r}
+
+#load("L:/Flow ecology and climate change_ES/Jenny/AirTemp/Modeling/spp_tmp_train_dat.RData")
+#save(species, file = "spp_tmp_dat.RData")
+load("spp_tmp_dat.RData")
+pca <- prcomp(species[,5:10], scale=TRUE)
+summary(pca)
+
+spp <- bind(species, pca$x)
+spp <- spp %>% 
+  select(name, occurrence, PC1, PC2)
+
+trt <- spp %>% filter(name %in% "rainbow trout")
+suc <- spp %>% filter(name %in% "santa ana sucker")
+vir <- spp %>% filter(name %in% "least bell's vireo")
+chb <- spp %>% filter(name %in% "arroyo chub")
+toa <- spp %>% filter(name %in% "arroyo toad")
+tur <- spp %>% filter(name %in% "southwestern pond turtle")
+
+
+summary(trout_mdl <- glm(occurrence ~ PC1+PC2, family = "binomial",data = trt))
+summary(sucker_mdl <- glm(occurrence ~ PC1+PC2, family = "binomial",data = suc))
+summary(vireo_mdl <- glm(occurrence ~ PC1+PC2, family = "binomial",data = vir))
+summary(chub_mdl <- glm(occurrence ~ PC1+PC2, family = "binomial",data = chb))
+summary(toad_mdl <- glm(occurrence ~ PC1+PC2, family = "binomial",data = toa))
+summary(turtle_mdl <- glm(occurrence ~ PC1+PC2, family = "binomial",data = tur))
+
+
+```
+
 In this first code chunk, we read in the random forest models for each spp to predict P(occurrence) based on streamflow, the logistic regession models based on temperature, and the streamflow metric and temperature dataframes
+
 
 ```{r}
 #models based on streamflow metrics
@@ -39,7 +71,7 @@ load("elv_comid.RData")
 
 #baseline flow
 load("bsflowmetest.RData")
-baseline <- bsflowmetest %>% 
+baseline_flow <- bsflowmetest %>% 
   select(var, COMID, dtsl, est) %>% 
   filter(COMID %in% clusters$COMID) %>% 
   mutate(year = year(dtsl)) %>% 
@@ -47,16 +79,100 @@ baseline <- bsflowmetest %>%
 
 #future flow
 load("flowmetdt2.RData")
-future <- flowmetdt2 %>% 
+future_flow <- flowmetdt2 %>% 
   select(var, COMID, dtsl, est) %>% 
   filter(COMID %in% clusters$COMID) %>% 
   mutate(year = year(dtsl)) %>% 
   spread(var, est)
 
-flow <- bind_rows(baseline, future)
+flow <- bind_rows(baseline_flow, future_flow)
 flow <- left_join(flow, elv, by = "COMID")
 
-rm(bsflowmetest, flowmetdt2, clusters, baseline, future, elv)
+#temperature
+load("fut_strm_tmp_wtrshd.RData")
+load("baseline_stream_temp_wtrshd.RData")
+temp <- rbind(baseline_stream_temp, future) %>% 
+  filter(COMID %in% clusters$COMID) #filter to remove COMIDs in urban areas
 
-load("tmp_metrics_all.RData")
+flow <- flow %>% filter(COMID %in% temp$COMID) #filter to make the COMIDs line up with the temp (likely removing the coastline)
+
+rm(baseline_stream_temp, future, bsflowmetest, flowmetdt2, clusters, baseline_flow, future_flow, elv)
+
+```
+
+
+In this code chunk, we make the temperature data that we are making predicitons on in the same variables as the PC1 and PC2
+```{r}
+
+
+pred_tmp <- temp[,3:8]
+
+std_dat <- scale(pred_tmp)
+
+PC1 <- as.matrix(std_dat) %*% as.vector(pca$rotation[,1])
+
+PC2 <- as.matrix(std_dat) %*% as.vector(pca$rotation[,2])
+
+rm(pred_tmp)
+
+temp <- cbind(temp, PC1, PC2)
+
+```
+
+Here we will use the temp models to make predictions for Temp and add in a column for baseline, mid-centiry, and end-of-centry
+
+```{r}
+
+temp$trout <- predict(trout_mdl, newdata = temp, type = "response")
+temp$chub <- predict(chub_mdl, newdata = temp, type = "response")
+temp$sucker <- predict(sucker_mdl, newdata = temp, type = "response")
+temp$toad <- predict(toad_mdl, newdata = temp, type = "response")
+temp$vireo <- predict(vireo_mdl, newdata = temp, type = "response")
+temp$turtle <- predict(turtle_mdl, newdata = temp, type = "response")
+
+temp$time <- ifelse(temp$year<=2014, "baseline", 
+                    ifelse(temp$year >= 2022 & temp$year <= 2061, "mid", "end"))
+
+```
+
+In this chunk we will make three figures 1: line graph showing mean and 5th 9th percentile probablilities in all years faceting for each spp.
+2. violine plots in change of the dist of change in prob from baseline to future for high and low elv  for each spp and a map showing change for each spp.
+
+```{r}
+
+timeline <- temp %>% 
+  select(COMID, year, elv, trout, chub, sucker, toad, vireo, turtle) %>% 
+  pivot_longer(cols = 4:9, names_to = "Species", values_to = "Probability") %>% 
+  group_by(year, Species) %>% 
+  summarise(avg = mean(Probability),
+            upr_95 = quantile(Probability, probs = .95),
+            lwr_05 = quantile(Probability, probs = .05)
+    
+  )
+
+
+#maximum 7-day average
+
+p <- ggplot(data = timeline, mapping = aes(x = year, y = avg)) + 
+  geom_line(lwd = 2)+
+  geom_smooth(method = "lm")+
+  geom_line(data = timeline, mapping = aes(x = year, y = upr_95), color = "grey60")+
+  geom_line(data = timeline, mapping = aes(x = year, y = lwr_05), color = "grey60")+
+  theme(panel.grid.major=element_line(colour="grey90"),
+        panel.background = element_blank(),
+        axis.title.x = element_text(size=30), 
+        axis.title.y = element_text(size = 30),
+        axis.text.x = element_text(hjust = 1, size = 20),
+        axis.text.y = element_text(size = 20),
+        title = element_text(size = 30),
+        strip.text = element_text(size = 30, face = "bold"),
+        strip.background = element_rect(fill = "lightblue", colour = "black"))+
+  scale_x_continuous(breaks = seq(1980, 2100, by = 20))+
+  scale_y_continuous(breaks = seq(0, 1, by = 0.25))+
+  labs(x = NULL, y = "Probability")+
+  facet_wrap(vars(Species), nrow = 3)
+ 
+  
+ggsave("spp_prob_timeseries.tiff", plot = p, dpi = 300, width = 25, height = 20, compression = "lzw")
+
 ```
