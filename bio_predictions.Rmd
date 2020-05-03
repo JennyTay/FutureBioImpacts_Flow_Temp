@@ -10,12 +10,14 @@ output: html_document
 library(tidyverse)
 library(sf)
 library(lubridate)
+library(RColorBrewer)
+library(gridExtra)
 
 ```
 
 In this document, we make predictions for the biology using the stream temp and the hydrologic metrics and the already built biological models.
 
-
+first, with the temperature data, we run PCA on the training data so that we run a logistic regression with spp presence and absece data using PCA predictor variables. This lets us use all the temp varialbes for each spp, but ensures that the variables are not correlated.  Then we run the logistic regression..
 ```{r}
 
 #load("L:/Flow ecology and climate change_ES/Jenny/AirTemp/Modeling/spp_tmp_train_dat.RData")
@@ -46,7 +48,7 @@ summary(turtle_mdl <- glm(occurrence ~ PC1+PC2, family = "binomial",data = tur))
 
 ```
 
-In this first code chunk, we read in the random forest models for each spp to predict P(occurrence) based on streamflow, the logistic regession models based on temperature, and the streamflow metric and temperature dataframes
+In this code chunk, we read in the random forest models for each spp to predict P(occurrence) based on streamflow, and the streamflow metric and temperature dataframes
 
 
 ```{r}
@@ -58,10 +60,8 @@ load("mod_turtle_rf.RData")
 load("mod_sucker_rf.RData")
 load("mod_trout_rf.RData")
 
-#models based on temp metrics
 
-#streamflow metric and temp data
-
+#load clusters and elevation data
 clusters<- st_read("C:/Users/JennyT/Documents/LitReview/RB4/StreamCat/COMID clustering.shp") %>% 
   data.frame() %>% 
   select(COMID, clstrCt, dam) %>% 
@@ -69,6 +69,7 @@ clusters<- st_read("C:/Users/JennyT/Documents/LitReview/RB4/StreamCat/COMID clus
 
 load("elv_comid.RData")
 
+#streamflow metric data
 #baseline flow
 load("bsflowmetest.RData")
 baseline_flow <- bsflowmetest %>% 
@@ -88,13 +89,14 @@ future_flow <- flowmetdt2 %>%
 flow <- bind_rows(baseline_flow, future_flow)
 flow <- left_join(flow, elv, by = "COMID")
 
-#temperature
+#temperature data
 load("fut_strm_tmp_wtrshd.RData")
 load("baseline_stream_temp_wtrshd.RData")
 temp <- rbind(baseline_stream_temp, future) %>% 
   filter(COMID %in% clusters$COMID) #filter to remove COMIDs in urban areas
 
-flow <- flow %>% filter(COMID %in% temp$COMID) #filter to make the COMIDs line up with the temp (likely removing the coastline)
+#filter to make the COMIDs line up with the temp (likely removing the coastline)
+flow <- flow %>% filter(COMID %in% temp$COMID) 
 
 rm(baseline_stream_temp, future, bsflowmetest, flowmetdt2, clusters, baseline_flow, future_flow, elv)
 
@@ -135,11 +137,11 @@ temp$time <- ifelse(temp$year<=2014, "baseline",
 
 ```
 
-In this chunk we will make three figures 1: line graph showing mean and 5th 9th percentile probablilities in all years faceting for each spp.
-2. violine plots in change of the dist of change in prob from baseline to future for high and low elv  for each spp and a map showing change for each spp.
+In this chunk we will make a  figure of line graph showing mean and 5th 9th percentile probablilities in all years faceting for each spp.
 
 ```{r}
 
+#plot for average (+high and low percentiles) annual probabilities across all COMID
 timeline <- temp %>% 
   select(COMID, year, elv, trout, chub, sucker, toad, vireo, turtle) %>% 
   pivot_longer(cols = 4:9, names_to = "Species", values_to = "Probability") %>% 
@@ -150,8 +152,6 @@ timeline <- temp %>%
     
   )
 
-
-#maximum 7-day average
 
 p <- ggplot(data = timeline, mapping = aes(x = year, y = avg)) + 
   geom_line(lwd = 2)+
@@ -176,3 +176,171 @@ p <- ggplot(data = timeline, mapping = aes(x = year, y = avg)) +
 ggsave("spp_prob_timeseries.tiff", plot = p, dpi = 300, width = 25, height = 20, compression = "lzw")
 
 ```
+
+
+violine plots in change of the dist of change in prob from baseline to future for high and low elv  for each spp and a map showing change for each spp.
+```{r}
+
+
+df<- temp %>%
+  select(COMID, year, elv, trout, chub, sucker, toad, vireo, turtle, time) %>% 
+  filter(time %in% c("baseline", "end")) %>% 
+  pivot_longer(cols = 4:9, names_to = "Species", values_to = "Probability") %>%
+  group_by(Species, time, COMID)%>% 
+  summarise(avgProb = mean(Probability)) %>% 
+  ungroup()
+
+chng <- 
+  data.frame(
+    "COMID" = unique(df$COMID),
+    "chub_chg" = df$avgProb[df$Species == "chub" & df$time == "end"] - df$avgProb[df$Species == "chub" & df$time == "baseline"],
+    "suc_chg" = df$avgProb[df$Species == "sucker" & df$time == "end"] - df$avgProb[df$Species == "sucker" & df$time == "baseline"],
+    "trt_chg" = df$avgProb[df$Species == "trout" & df$time == "end"] - df$avgProb[df$Species == "trout" & df$time == "baseline"],
+    "vir_chg" = df$avgProb[df$Species == "vireo" & df$time == "end"] - df$avgProb[df$Species == "vireo" & df$time == "baseline"],
+    "toa_chg" = df$avgProb[df$Species == "toad" & df$time == "end"] - df$avgProb[df$Species == "toad" & df$time == "baseline"],
+    "tur_chg" = df$avgProb[df$Species == "turtle" & df$time == "end"] - df$avgProb[df$Species == "turtle" & df$time == "baseline"]
+    )
+#calculate row averages and percentiles to get the average change across GCM and COMID in each metric
+round(colMeans(chng),2)
+
+round(apply(chng, 2, function (x){
+  quantile(x, probs = 0.95)
+}), 2)
+
+round(apply(chng, 2, function (x){
+  quantile(x, probs = 0.05)
+}), 2)
+
+#attach to spatial file
+load("NHD_strm_rvr_map.RData")
+chng <- left_join(NHD, chng, by = "COMID") %>% 
+  filter(!is.na(chub_chg))
+
+load("wtrshd_bundry.RData")
+wtrshd_bndry<- st_transform(wtrshd_bndry, crs = st_crs(chng))
+
+myPalette <- colorRampPalette(brewer.pal(9, "RdYlBu"))
+
+a <- ggplot(data = chng, aes(col=chng$chub_chg)) +
+  geom_sf(data = wtrshd_bndry, fill = "white", color = gray(.3), lwd = 1) +
+  geom_sf()+
+  scale_color_gradientn(colours = myPalette(100), limits = c(min(chng$chub_chg), max(chng$chub_chg)))+
+  labs(col = "\u0394 P") +  ggtitle("(A)", subtitle = "Arroyo chub") + 
+  theme(panel.grid.major=element_line(colour="transparent"),panel.background = element_blank(),
+        axis.text = element_blank(),axis.ticks = element_blank(),
+        text = element_text(size=30))
+b <- ggplot(data = chng, aes(col=chng$suc_chg)) +
+  geom_sf(data = wtrshd_bndry, fill = "white", color = gray(.3), lwd = 1) +
+  geom_sf()+
+  scale_color_gradientn(colours = myPalette(100), limits = c(min(chng$suc_chg), max(chng$suc_chg)))+
+  labs(col = "\u0394 P") +  ggtitle("(B)", subtitle = "Santa Ana sucker") + 
+  theme(panel.grid.major=element_line(colour="transparent"),panel.background = element_blank(),
+        axis.text = element_blank(),axis.ticks = element_blank(),
+        text = element_text(size=30))
+c <- ggplot(data = chng, aes(col=chng$trt_chg)) +
+  geom_sf(data = wtrshd_bndry, fill = "white", color = gray(.3), lwd = 1) +
+  geom_sf()+
+  scale_color_gradientn(colours = myPalette(100), limits = c(min(chng$trt_chg), max(chng$trt_chg)))+
+  labs(col = "\u0394 P") +  ggtitle("(C)", subtitle = "rainbow trout") + 
+  theme(panel.grid.major=element_line(colour="transparent"),panel.background = element_blank(),
+        axis.text = element_blank(),axis.ticks = element_blank(),
+        text = element_text(size=30))
+d <- ggplot(data = chng, aes(col=chng$vir_chg)) +
+  geom_sf(data = wtrshd_bndry, fill = "white", color = gray(.3), lwd = 1) +
+  geom_sf()+
+  scale_color_gradientn(colours = myPalette(100), limits = c(min(chng$vir_chg), max(chng$vir_chg)))+
+  labs(col = "\u0394 P") +  ggtitle("(D)", subtitle = "Least Bell's vireo") + 
+  theme(panel.grid.major=element_line(colour="transparent"),panel.background = element_blank(),
+        axis.text = element_blank(),axis.ticks = element_blank(),
+        text = element_text(size=30))
+e <- ggplot(data = chng, aes(col=chng$toa_chg)) +
+  geom_sf(data = wtrshd_bndry, fill = "white", color = gray(.3), lwd = 1) +
+  geom_sf()+
+  scale_color_gradientn(colours = myPalette(100), limits = c(min(chng$toa_chg), max(chng$toa_chg)))+
+  labs(col = "\u0394 P") +  ggtitle("(E)", subtitle = "Arroyo toad") + 
+  theme(panel.grid.major=element_line(colour="transparent"),panel.background = element_blank(),
+        axis.text = element_blank(),axis.ticks = element_blank(),
+        text = element_text(size=30))
+f <- ggplot(data = chng, aes(col=chng$tur_chg)) +
+  geom_sf(data = wtrshd_bndry, fill = "white", color = gray(.3), lwd = 1) +
+  geom_sf()+
+  scale_color_gradientn(colours = myPalette(100), limits = c(min(chng$tur_chg), max(chng$tur_chg)))+
+  labs(col = "\u0394 P") +  ggtitle("(F)", subtitle = "Southwestern pond turtle") + 
+  theme(panel.grid.major=element_line(colour="transparent"),panel.background = element_blank(),
+        axis.text = element_blank(),axis.ticks = element_blank(),
+        text = element_text(size=30))
+
+
+
+comid_elv <- temp %>% 
+  select(COMID, elv) %>% unique
+chng <- left_join(chng, comid_elv, by = "COMID") %>% 
+  data.frame() %>% 
+  select(-geometry)
+
+round(colMeans(chng[chng$elv=="high", 2:7]),2)
+round(colMeans(chng[chng$elv=="low", 2:7]),2)
+t.test(chng[chng$elv=="low", 2], chng[chng$elv=="high", 2])#max
+t.test(chng[chng$elv=="low", 3], chng[chng$elv=="high", 3])#min
+t.test(chng[chng$elv=="low", 4], chng[chng$elv=="high", 4])#avg
+
+g <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = chub_chg))+
+  geom_violin()+geom_boxplot(width = .08)+
+  labs(y="\u0394 P", x = "Elevation group")+
+  ggtitle("(G)", subtitle = "Arroyo chub")+ 
+  theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
+h <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = suc_chg))+
+  geom_violin()+geom_boxplot(width = .08)+
+  labs(y="\u0394 P", x = NULL)+
+  ggtitle("(H)", subtitle = "Santa Ana sucker")+ 
+  theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
+i <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = trt_chg))+
+  geom_violin()+geom_boxplot(width = .08)+
+  labs(y="\u0394 P", x = NULL)+
+  ggtitle("(I)", subtitle = "rainbow trout")+ 
+  theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
+j <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = vir_chg))+
+  geom_violin()+geom_boxplot(width = .08)+
+  labs(y="\u0394 P", x = NULL)+
+  ggtitle("(J)", subtitle = "Least Bell's vireo")+ 
+  theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
+k <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = toa_chg))+
+  geom_violin()+geom_boxplot(width = .08)+
+  labs(y="\u0394 P", x = NULL)+
+  ggtitle("(K)", subtitle = "Arroyo toad")+ 
+  theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
+l <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = tur_chg))+
+  geom_violin()+geom_boxplot(width = .08)+
+  labs(y="\u0394 P", x = NULL)+
+  ggtitle("(L)", subtitle = "southwestern pond turtle")+ 
+  theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
+
+margin = theme(plot.margin = unit(c(5,5,5,5), "mm"))
+p<-arrangeGrob(
+  a + margin, g + margin, 
+  b + margin, h + margin, 
+  c + margin, i + margin, 
+  d + margin, j + margin, 
+  e + margin, k + margin, 
+  f + margin, l + margin, 
+  nrow = 6)
+ggsave("bio_chng.tiff", plot = p, dpi = 300, width = 15, height = 30, compression = "lzw")
+
+
+
+```
+
+In this chunk of code, we plot the prob of occurrence based on the flow random forest.
+we do bar plots to show the change in probability for wet, dry and average year.
+```{r}
+
+
+```
+
+In the final code chunk, we want a plot that shows for each spp, the direction of change for temp, and the direction of change for flow (in each wet, dry and avg year). this could be similar to the violin plot in the original paper.
