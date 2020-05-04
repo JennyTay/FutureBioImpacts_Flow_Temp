@@ -14,11 +14,12 @@ library(RColorBrewer)
 library(gridExtra)
 library(randomForest)
 
+
 ```
 
 In this document, we make predictions for the biology using the stream temp and the hydrologic metrics and the already built biological models.
 
-first, with the temperature data, we run PCA on the training data so that we run a logistic regression with spp presence and absece data using PCA predictor variables. This lets us use all the temp varialbes for each spp, but ensures that the variables are not correlated.  Then we run the logistic regression..
+first, we build a model to predict spp presence or absence with the temperature data. we run PCA on the training data so that we run a logistic regression with spp presence and absece data using PCA predictor variables. This lets us use all the temp varialbes for each spp, but ensures that the variables are not correlated.  Then we run the logistic regression..
 ```{r}
 
 #load("L:/Flow ecology and climate change_ES/Jenny/AirTemp/Modeling/spp_tmp_train_dat.RData")
@@ -27,7 +28,7 @@ load("spp_tmp_dat.RData")
 pca <- prcomp(species[,5:10], scale=TRUE)
 summary(pca)
 
-spp <- bind(species, pca$x)
+spp <- cbind(species, pca$x)
 spp <- spp %>% 
   select(name, occurrence, PC1, PC2)
 
@@ -45,6 +46,7 @@ summary(vireo_mdl <- glm(occurrence ~ PC1+PC2, family = "binomial",data = vir))
 summary(chub_mdl <- glm(occurrence ~ PC1+PC2, family = "binomial",data = chb))
 summary(toad_mdl <- glm(occurrence ~ PC1+PC2, family = "binomial",data = toa))
 summary(turtle_mdl <- glm(occurrence ~ PC1+PC2, family = "binomial",data = tur))
+
 
 
 ```
@@ -104,7 +106,7 @@ rm(baseline_stream_temp, future, bsflowmetest, flowmetdt2, clusters, baseline_fl
 ```
 
 
-In this code chunk, we make the temperature data that we are making predicitons on in the same variables as the PC1 and PC2
+In this code chunk, we transform the temperature data for prediction into the PC1 and PC2 variables
 ```{r}
 
 
@@ -122,8 +124,7 @@ temp <- cbind(temp, PC1, PC2)
 
 ```
 
-Here we will use the temp models to make predictions for Temp and add in a column for baseline, mid-centiry, and end-of-centry
-
+Here we will use the logistic reg models for spp presence and absense based on the temperature PCA models to make predictions for Temp and add in a column for baseline, mid-century, and end-of-centry
 ```{r}
 
 temp$trout <- predict(trout_mdl, newdata = temp, type = "response")
@@ -171,10 +172,30 @@ p <- ggplot(data = timeline, mapping = aes(x = year, y = avg)) +
   scale_x_continuous(breaks = seq(1980, 2100, by = 20))+
   scale_y_continuous(breaks = seq(0, 1, by = 0.25))+
   labs(x = NULL, y = "Probability")+
-  facet_wrap(vars(Species), nrow = 3)
+  facet_wrap(vars(Species), nrow = 3, labeller = as_labeller(c("chub" = "Arroyo chub", "sucker" = "Santa Ana sucker",
+                                                               "toad" = "Arroyo toad", "trout" = "Rainbow trout",
+                                                               "turtle" = "SW pond turtle", "vireo" = "Least Bell's vireo")))
  
   
 ggsave("spp_prob_timeseries.tiff", plot = p, dpi = 300, width = 25, height = 20, compression = "lzw")
+
+#get slopes for each spp so we can comment on the rate of change
+c <- summary(lm(avg ~ year, data = timeline[timeline$Species == "chub",]))
+d <- summary(lm(avg ~ year, data = timeline[timeline$Species == "trout",]))
+e <- summary(lm(avg ~ year, data = timeline[timeline$Species == "vireo",]))
+f <- summary(lm(avg ~ year, data = timeline[timeline$Species == "toad",]))
+g <- summary(lm(avg ~ year, data = timeline[timeline$Species == "turtle",]))
+h <- summary(lm(avg ~ year, data = timeline[timeline$Species == "sucker",]))
+
+t(data.frame(
+  "chub slope" = coefficients(c)[2,1],
+  "trt slope" = coefficients(d)[2,1],
+  "vir slope" = coefficients(e)[2,1],
+  "toa slope" = coefficients(f)[2,1],
+  "tur slope" = coefficients(g)[2,1],
+  "suc slope" = coefficients(h)[2,1]
+  
+))
 
 ```
 
@@ -281,9 +302,12 @@ chng <- left_join(chng, comid_elv, by = "COMID") %>%
 
 round(colMeans(chng[chng$elv=="high", 2:7]),2)
 round(colMeans(chng[chng$elv=="low", 2:7]),2)
-t.test(chng[chng$elv=="low", 2], chng[chng$elv=="high", 2])#max
-t.test(chng[chng$elv=="low", 3], chng[chng$elv=="high", 3])#min
-t.test(chng[chng$elv=="low", 4], chng[chng$elv=="high", 4])#avg
+t.test(chng[chng$elv=="low", 2], chng[chng$elv=="high", 2])#chub
+t.test(chng[chng$elv=="low", 3], chng[chng$elv=="high", 3])#suc
+t.test(chng[chng$elv=="low", 4], chng[chng$elv=="high", 4])#trt
+t.test(chng[chng$elv=="low", 5], chng[chng$elv=="high", 5])#vir
+t.test(chng[chng$elv=="low", 6], chng[chng$elv=="high", 6])#toa
+t.test(chng[chng$elv=="low", 7], chng[chng$elv=="high", 7])#tur
 
 g <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = chub_chg))+
   geom_violin()+geom_boxplot(width = .08)+
@@ -365,7 +389,7 @@ a <- ggplot(data = biopred, mapping = aes(x = factor(type, levels = c("dry", "mo
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), 
         legend.title = element_blank(), 
-        legend.position = c(.30, 1), 
+        legend.position = c(.21, 1), 
         legend.justification = c("right", "top"),
         legend.box.background = element_rect(color="black", size=.5),
         strip.text = element_text(size = 20, face = "bold"),
@@ -463,6 +487,7 @@ bio_chg <- data.frame(
 )
 
 bio_chg <- t(bio_chg)
+write.csv(bio_chg, file = "t.csv")
 
 ```
 
@@ -470,8 +495,25 @@ In the final code chunk, we want a plot that shows for each spp, the direction o
 
 ```{r}
 
+comp <- biopred %>%
+  select(COMID, year, trout, chub, sucker, toad, vireo, turtle, time) %>% 
+  pivot_longer(cols = 3:8, names_to = "Species", values_to = "Probability")
+comp$metric <- "flow"
 
+comp2 <- temp %>%
+  select(COMID, year, trout, chub, sucker, toad, vireo, turtle, time) %>% 
+  pivot_longer(cols = 3:8, names_to = "Species", values_to = "Probability") %>% 
+  filter(year %in% c(1993, 2010, 2014, 2090, 2095, 2100))
+comp2$metric <- "temp"
+comp2$time[comp2$time == "end"] <- "future"
 
+comp3 <- rbind(comp, comp2)
+comp3$type <- ifelse(year %in% c(1993, 2095), "wet",
+                     ifelse(year %in% c(2100, 2010), "moderate", "dry"))
+
+ggplot(data = comp3, aes(x = factor(year), y = Probability, color = time))+
+  geom_violin()+
+  facet_wrap(vars(Species, time))
 
 
 ```
