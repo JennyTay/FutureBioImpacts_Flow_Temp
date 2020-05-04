@@ -12,6 +12,7 @@ library(sf)
 library(lubridate)
 library(RColorBrewer)
 library(gridExtra)
+library(randomForest)
 
 ```
 
@@ -53,12 +54,12 @@ In this code chunk, we read in the random forest models for each spp to predict 
 
 ```{r}
 #models based on streamflow metrics
-load("mod_chub_rf.RData")
-load("mod_vireo_rf.RData")
-load("mod_toad_rf.RData")
-load("mod_turtle_rf.RData")
-load("mod_sucker_rf.RData")
-load("mod_trout_rf.RData")
+load("biology_model/mod_chub_rf.RData")
+load("biology_model/mod_vireo_rf.RData")
+load("biology_model/mod_toad_rf.RData")
+load("biology_model/mod_turtle_rf.RData")
+load("biology_model/mod_sucker_rf.RData")
+load("biology_model/mod_trout_rf.RData")
 
 
 #load clusters and elevation data
@@ -340,7 +341,137 @@ In this chunk of code, we plot the prob of occurrence based on the flow random f
 we do bar plots to show the change in probability for wet, dry and average year.
 ```{r}
 
+head(flow)
+
+biopred <- data.frame(
+  "COMID"  = flow$COMID,
+  "elv" = flow$elv,
+  "ElevCat" = flow$ElevCat,
+  "year" = flow$year,
+  "type" = ifelse(flow$year %in% c(2095, 1993), "wet",
+                  ifelse(flow$year %in% c(2010, 2100), "moderate", "dry")),
+  "time" = ifelse(flow$year %in% c(2010, 1993, 2014), "baseline", "future"),
+  "chub" = predict(mod_chub_rf, newdata = flow, type = "prob")[,2],
+  "sucker" = predict(mod_sucker_rf, newdata = flow, type = "prob")[,2],
+  "trout" = predict(mod_trout_rf, newdata = flow, type = "prob")[,2],
+  "vireo" = predict(mod_vireo_rf, newdata = flow, type = "prob")[,2],
+  "toad" = predict(mod_toad_rf, newdata = flow, type = "prob")[,2],
+  "turtle" = predict(mod_turtle_rf, newdata = flow, type = "prob")[,2]
+)
+
+a <- ggplot(data = biopred, mapping = aes(x = factor(type, levels = c("dry", "moderate", "wet")), y = chub, fill = time))+
+  geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+
+  labs(y="P(Occurrence)", x = NULL, subtitle = "Arroyo chub")+
+  theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), 
+        legend.title = element_blank(), 
+        legend.position = c(.30, 1), 
+        legend.justification = c("right", "top"),
+        legend.box.background = element_rect(color="black", size=.5),
+        strip.text = element_text(size = 20, face = "bold"),
+        strip.background = element_rect(fill = "lightblue", colour = "black"))+
+  facet_wrap(vars(elv), nrow = 1)
+
+b <- ggplot(data = biopred, mapping = aes(x = factor(type, levels = c("dry", "moderate", "wet")), y = sucker, fill = time))+
+  geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+
+  labs(y=NULL, x = NULL, subtitle = "Santa Ana sucker")+
+  theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none",
+        strip.text = element_text(size = 20, face = "bold"),
+        strip.background = element_rect(fill = "lightblue", colour = "black"))+
+  facet_wrap(vars(elv), nrow = 1)
+
+c <- ggplot(data = biopred, mapping = aes(x = factor(type, levels = c("dry", "moderate", "wet")), y = trout, fill = time))+
+  geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+
+  labs(y= NULL, x = NULL, subtitle = "Rainbow trout")+
+  theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none",
+        strip.text = element_text(size = 20, face = "bold"),
+        strip.background = element_rect(fill = "lightblue", colour = "black"))+
+  facet_wrap(vars(elv), nrow = 1)
+
+d <- ggplot(data = biopred, mapping = aes(x = factor(type, levels = c("dry", "moderate", "wet")), y = vireo, fill = time))+
+  geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+
+  labs(y="P(Occurrence)", x = "Water Year Type", subtitle = "Least Bell's vireo")+
+  theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none",
+        strip.text = element_text(size = 20, face = "bold"),
+        strip.background = element_rect(fill = "lightblue", colour = "black"))+
+  facet_wrap(vars(elv), nrow = 1)
+
+e <- ggplot(data = biopred, mapping = aes(x = factor(type, levels = c("dry", "moderate", "wet")), y = toad, fill = time))+
+  geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+
+  labs(y=NULL, x = "Water Year Type", subtitle = "Arroyo toad")+
+  theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none",
+        strip.text = element_text(size = 20, face = "bold"),
+        strip.background = element_rect(fill = "lightblue", colour = "black"))+
+  facet_wrap(vars(elv), nrow = 1)
+
+f <- ggplot(data = biopred, mapping = aes(x = factor(type, levels = c("dry", "moderate", "wet")), y = turtle, fill = time))+
+  geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+
+  labs(y=NULL, x = "Water Year Type", subtitle = "Southwestern pond turtle")+
+  theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none",
+        strip.text = element_text(size = 20, face = "bold"),
+        strip.background = element_rect(fill = "lightblue", colour = "black"))+
+  facet_wrap(vars(elv), nrow = 1)
+
+margin = theme(plot.margin = unit(c(5,5,5,5), "mm"))
+p<-arrangeGrob(
+  a + margin, b+ margin, c+ margin, d+ margin, 
+  e+ margin, f + margin, nrow = 2)
+ggsave("bio_chng.tiff", plot = p, dpi = 300, width = 30, height = 15, compression = "lzw")
+
+
+```
+
+In this chunk of code, we calucate the mean change in prob of occurrence and the 5th and 95th percentiles
+```{r}
+
+
+#table for year type alone
+bio_chg <- biopred %>%
+  group_by(type) %>% 
+  summarize(chub_mn = round(mean(chub[time == "future"]-chub[time == "baseline"], na.rm = T), 2),
+            chub_05 = round(quantile(chub[time == "future"]-chub[time == "baseline"], na.rm = T, probs = 0.05), 2),
+            chub_95 = round(quantile(chub[time == "future"]-chub[time == "baseline"], na.rm = T, probs = 0.95), 2),
+            sucr_mn = round(mean(sucker[time == "future"]-sucker[time == "baseline"], na.rm = T), 2),
+            sucr_05 = round(quantile(sucker[time == "future"]-sucker[time == "baseline"], na.rm = T, probs = 0.05), 2),
+            sucr_95 = round(quantile(sucker[time == "future"]-sucker[time == "baseline"], na.rm = T, probs = 0.95), 2),
+            trou_mn = round(mean(trout[time == "future"]-trout[time == "baseline"], na.rm = T), 2),
+            trou_05 = round(quantile(trout[time == "future"]-trout[time == "baseline"], na.rm = T, probs = 0.05), 2),
+            trou_95 = round(quantile(trout[time == "future"]-trout[time == "baseline"], na.rm = T, probs = 0.95), 2),
+            toad_mn = round(mean(toad[time == "future"]-toad[time == "baseline"], na.rm = T), 2),
+            toad_05 = round(quantile(toad[time == "future"]-toad[time == "baseline"], na.rm = T, probs = 0.05), 2),
+            toad_95 = round(quantile(toad[time == "future"]-toad[time == "baseline"], na.rm = T, probs = 0.95), 2),
+            vire_mn = round(mean(vireo[time == "future"]-vireo[time == "baseline"], na.rm = T), 2),
+            vire_05 = round(quantile(vireo[time == "future"]-vireo[time == "baseline"], na.rm = T, probs = 0.05), 2),
+            vire_95 = round(quantile(vireo[time == "future"]-vireo[time == "baseline"], na.rm = T, probs = 0.95), 2),
+            turt_mn = round(mean(turtle[time == "future"]-turtle[time == "baseline"], na.rm = T), 2),
+            turt_05 = round(quantile(turtle[time == "future"]-turtle[time == "baseline"], na.rm = T, probs = 0.05), 2),
+            turt_95 = round(quantile(turtle[time == "future"]-turtle[time == "baseline"], na.rm = T, probs = 0.95), 2))
+
+bio_chg <- data.frame(
+  "type" = bio_chg$type,
+  "chub" = paste(bio_chg$chub_mn, " (", bio_chg$chub_05, ",", bio_chg$chub_95,  ") ", sep = ""),
+  "suck" = paste(bio_chg$sucr_mn, " (", bio_chg$sucr_05, ",", bio_chg$sucr_95,  ") ", sep = ""),
+  "trou" = paste(bio_chg$trou_mn, " (", bio_chg$trou_05, ",", bio_chg$trou_95,  ") ", sep = ""),
+  "vire" = paste(bio_chg$vire_mn, " (", bio_chg$vire_05, ",", bio_chg$vire_95,  ") ", sep = ""),
+  "toad" = paste(bio_chg$toad_mn, " (", bio_chg$toad_05, ",", bio_chg$toad_95,  ") ", sep = ""),
+  "turt" = paste(bio_chg$turt_mn, " (", bio_chg$turt_05, ",", bio_chg$turt_95,  ") ", sep = "")
+)
+
+bio_chg <- t(bio_chg)
 
 ```
 
 In the final code chunk, we want a plot that shows for each spp, the direction of change for temp, and the direction of change for flow (in each wet, dry and avg year). this could be similar to the violin plot in the original paper.
+
+```{r}
+
+
+
+
+
+```
