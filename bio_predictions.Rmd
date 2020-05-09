@@ -28,6 +28,8 @@ load("spp_tmp_dat.RData")
 pca <- prcomp(species[,5:10], scale=TRUE)
 summary(pca)
 
+write.csv(round(pca$rotation, 2), file = "pcaRotation.csv")
+
 spp <- cbind(species, pca$x)
 spp <- spp %>% 
   select(name, occurrence, PC1, PC2)
@@ -136,6 +138,42 @@ temp$turtle <- predict(turtle_mdl, newdata = temp, type = "response")
 
 temp$time <- ifelse(temp$year<=2014, "baseline", 
                     ifelse(temp$year >= 2022 & temp$year <= 2061, "mid", "end"))
+
+```
+
+Because PCA is hard to interpret, we will just plot each temp metric with prob of occurrence so people can see relatipmship
+```{r}
+t <- temp  %>% 
+  rename("Max 7-Day Mean" = "Max_Wkly_Mean_StreamT",
+         "Max 7-Day Max" = "Max_Wkl_Max_StreamT",
+         "Min 7-Day Min" = "Min_Wkl_Min_StreamT",
+         "Max 7-Day Rng" = "Max_Wkl_Rng_StreamT",
+         "Mean 7-Day Rng" = "Mean_Wkl_Rng_StreamT") %>% 
+  gather(3:8, key = "metric", value = "Temp") %>% 
+  gather(8:13, key = "species", value = "Probablilty") %>% 
+  filter(metric != "Max_Wkl_Max_StreamT_grt_30_")
+
+p <- ggplot(data = t, mapping = aes(x = Temp, y = Probablilty, color = metric))+
+  geom_smooth(method = "glm", method.args = list(family = "binomial")) +
+  theme(panel.grid.major=element_line(colour="grey90"),
+        panel.background = element_blank(),
+        axis.title.x = element_text(size=30), 
+        axis.title.y = element_text(size = 30),
+        axis.text.x = element_text(hjust = 1, size = 20),
+        axis.text.y = element_text(size = 30),
+        title = element_text(size = 30),
+        strip.text = element_text(size = 30, face = "bold"),
+        strip.background = element_rect(fill = "lightblue", colour = "black"),
+        legend.title = element_blank(),
+        legend.text=element_text(size=30),
+        legend.key.size = unit(3,"line"))+
+  labs(x = "Temperature (°C)", y = "Probability")+
+  facet_wrap(vars(species), labeller = as_labeller(c("chub" = "Arroyo chub", "sucker" = "Santa Ana sucker",
+                                                               "toad" = "Arroyo toad", "trout" = "Rainbow trout",
+                                                               "turtle" = "SW pond turtle", "vireo" = "Least Bell's vireo"))) 
+
+ggsave("spp_prob_response_to_Temp.tiff", plot = p, dpi = 300, width = 25, height = 10, compression = "lzw")
+
 
 ```
 
@@ -362,7 +400,7 @@ ggsave("bio_chng.tiff", plot = p, dpi = 300, width = 15, height = 30, compressio
 ```
 
 In this chunk of code, we plot the prob of occurrence based on the flow random forest.
-we do bar plots to show the change in probability for wet, dry and average year.
+we do bar plots to show the change in probability for high and low elv.
 ```{r}
 
 head(flow)
@@ -383,7 +421,10 @@ biopred <- data.frame(
   "turtle" = predict(mod_turtle_rf, newdata = flow, type = "prob")[,2]
 )
 
-a <- ggplot(data = biopred, mapping = aes(x = factor(type, levels = c("dry", "moderate", "wet")), y = chub, fill = time))+
+#anova to see how year type imapcts P(occurrence)
+summary(aov(vireo ~ type, data=biopred))
+
+a <- ggplot(data = biopred, mapping = aes(x = factor(elv, levels = c("low", "high")), y = chub, fill = time))+
   geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+
   labs(y="P(Occurrence)", x = NULL, subtitle = "Arroyo chub")+
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
@@ -393,53 +434,47 @@ a <- ggplot(data = biopred, mapping = aes(x = factor(type, levels = c("dry", "mo
         legend.justification = c("right", "top"),
         legend.box.background = element_rect(color="black", size=.5),
         strip.text = element_text(size = 20, face = "bold"),
-        strip.background = element_rect(fill = "lightblue", colour = "black"))+
-  facet_wrap(vars(elv), nrow = 1)
+        strip.background = element_rect(fill = "lightblue", colour = "black"))
 
-b <- ggplot(data = biopred, mapping = aes(x = factor(type, levels = c("dry", "moderate", "wet")), y = sucker, fill = time))+
+b <- ggplot(data = biopred, mapping = aes(x = factor(elv, levels = c("low", "high")), y = sucker, fill = time))+
   geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+
   labs(y=NULL, x = NULL, subtitle = "Santa Ana sucker")+
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none",
         strip.text = element_text(size = 20, face = "bold"),
-        strip.background = element_rect(fill = "lightblue", colour = "black"))+
-  facet_wrap(vars(elv), nrow = 1)
+        strip.background = element_rect(fill = "lightblue", colour = "black"))
 
-c <- ggplot(data = biopred, mapping = aes(x = factor(type, levels = c("dry", "moderate", "wet")), y = trout, fill = time))+
+c <- ggplot(data = biopred, mapping = aes(x = factor(elv, levels = c("low", "high")), y = trout, fill = time))+
   geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+
   labs(y= NULL, x = NULL, subtitle = "Rainbow trout")+
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none",
         strip.text = element_text(size = 20, face = "bold"),
-        strip.background = element_rect(fill = "lightblue", colour = "black"))+
-  facet_wrap(vars(elv), nrow = 1)
+        strip.background = element_rect(fill = "lightblue", colour = "black"))
 
-d <- ggplot(data = biopred, mapping = aes(x = factor(type, levels = c("dry", "moderate", "wet")), y = vireo, fill = time))+
+d <- ggplot(data = biopred, mapping = aes(x = factor(elv, levels = c("low", "high")), y = vireo, fill = time))+
   geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+
-  labs(y="P(Occurrence)", x = "Water Year Type", subtitle = "Least Bell's vireo")+
+  labs(y="P(Occurrence)", x = "Elevation", subtitle = "Least Bell's vireo")+
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none",
         strip.text = element_text(size = 20, face = "bold"),
-        strip.background = element_rect(fill = "lightblue", colour = "black"))+
-  facet_wrap(vars(elv), nrow = 1)
+        strip.background = element_rect(fill = "lightblue", colour = "black"))
 
-e <- ggplot(data = biopred, mapping = aes(x = factor(type, levels = c("dry", "moderate", "wet")), y = toad, fill = time))+
+e <- ggplot(data = biopred, mapping = aes(x = factor(elv, levels = c("low", "high")), y = toad, fill = time))+
   geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+
-  labs(y=NULL, x = "Water Year Type", subtitle = "Arroyo toad")+
+  labs(y=NULL, x = "Elevation", subtitle = "Arroyo toad")+
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none",
         strip.text = element_text(size = 20, face = "bold"),
-        strip.background = element_rect(fill = "lightblue", colour = "black"))+
-  facet_wrap(vars(elv), nrow = 1)
+        strip.background = element_rect(fill = "lightblue", colour = "black"))
 
-f <- ggplot(data = biopred, mapping = aes(x = factor(type, levels = c("dry", "moderate", "wet")), y = turtle, fill = time))+
+f <- ggplot(data = biopred, mapping = aes(x = factor(elv, levels = c("low", "high")), y = turtle, fill = time))+
   geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+
-  labs(y=NULL, x = "Water Year Type", subtitle = "Southwestern pond turtle")+
+  labs(y=NULL, x = "Elevation", subtitle = "Southwestern pond turtle")+
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none",
         strip.text = element_text(size = 20, face = "bold"),
-        strip.background = element_rect(fill = "lightblue", colour = "black"))+
-  facet_wrap(vars(elv), nrow = 1)
+        strip.background = element_rect(fill = "lightblue", colour = "black"))
 
 margin = theme(plot.margin = unit(c(5,5,5,5), "mm"))
 p<-arrangeGrob(
@@ -529,5 +564,9 @@ p <- ggplot(data = comp3, aes(x = factor(time), y = Probability, fill = metric))
 ggsave("flow_v_temp.tiff", plot = p, dpi = 300, width = 15, height = 10, compression = "lzw")
 
 
+#table for the average chang ein flow vs the average change in T
+d <- comp3 %>% 
+  group_by(Species, metric) %>% 
+  summarise(change = round(mean(Probability[time == "future"]-Probability[time == "baseline"], na.rm = T), 2))
 
 ```
