@@ -193,6 +193,15 @@ timeline <- temp %>%
   )
 
 
+# expand yr with full NA values ---- Not Working!!!
+# timeline <- seq(min(timeline$year), max(timeline$year)) %>%
+#   tibble(
+#     year = .
+#   ) %>%
+#   left_join(timeline, by = 'year')
+
+
+
 p <- ggplot(data = timeline, mapping = aes(x = year, y = avg)) + 
   geom_line(lwd = 2)+
   geom_smooth(method = "lm")+
