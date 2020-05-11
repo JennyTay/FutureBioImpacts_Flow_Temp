@@ -172,7 +172,7 @@ p <- ggplot(data = t, mapping = aes(x = Temp, y = Probablilty, color = metric))+
                                                                "toad" = "Arroyo toad", "trout" = "Rainbow trout",
                                                                "turtle" = "SW pond turtle", "vireo" = "Least Bell's vireo"))) 
 
-ggsave("spp_prob_response_to_Temp.tiff", plot = p, dpi = 300, width = 25, height = 10, compression = "lzw")
+ggsave("spp_prob_response_to_Temp.tiff", plot = p, dpi = 300, width = 20, height = 10, compression = "lzw")
 
 
 ```
