@@ -224,7 +224,7 @@ p <- ggplot(data = timeline, mapping = aes(x = year, y = avg)) +
                                                                "turtle" = "SW pond turtle", "vireo" = "Least Bell's vireo")))
  
   
-ggsave("spp_prob_timeseries.tiff", plot = p, dpi = 300, width = 25, height = 20, compression = "lzw")
+ggsave("spp_prob_timeseries.tiff", plot = p, dpi = 300, width = 25, height = 20, compression = "lzw") 
 
 #get slopes for each spp so we can comment on the rate of change
 c <- summary(lm(avg ~ year, data = timeline[timeline$Species == "chub",]))
