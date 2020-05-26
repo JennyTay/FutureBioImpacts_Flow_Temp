@@ -163,7 +163,7 @@ p <- ggplot(data = t, mapping = aes(x = Temp, y = Probablilty, color = metric))+
         axis.text.y = element_text(size = 20),
         title = element_text(size = 30),
         strip.text = element_text(size = 30, face = "bold"),
-        strip.background = element_rect(fill = "grey90", colour = "black"),
+        strip.background = element_rect(fill = "grey99", colour = "black"),
         legend.title = element_blank(),
         legend.text=element_text(size=30),
         legend.key.size = unit(3,"line"))+
