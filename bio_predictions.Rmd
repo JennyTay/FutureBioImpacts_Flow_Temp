@@ -578,4 +578,22 @@ d <- comp3 %>%
   group_by(Species, metric) %>% 
   summarise(change = round(mean(Probability[time == "future"]-Probability[time == "baseline"], na.rm = T), 2))
 
+#calcuate p-val for differences in the changes due to T and due to Q
+f <- comp3 %>% 
+  filter(metric == "flow") %>% 
+  select(-metric, -year) %>% 
+  spread(key = time, value = Probability) %>% 
+  mutate(change = future - baseline)
+t <- comp3 %>% 
+  filter(metric == "temp") %>% 
+  select(-metric, -year) %>% 
+  spread(key = time, value = Probability) %>% 
+  mutate(change = future - baseline)
+
+t.test(f$change[f$Species=="chub"], t$change[t$Species=="chub"])
+t.test(f$change[f$Species=="trout"], t$change[t$Species=="trout"])
+t.test(f$change[f$Species=="sucker"], t$change[t$Species=="sucker"])
+t.test(f$change[f$Species=="vireo"], t$change[t$Species=="vireo"])
+t.test(f$change[f$Species=="turtle"], t$change[t$Species=="turtle"])
+t.test(f$change[f$Species=="toad"], t$change[t$Species=="toad"])
 ```
