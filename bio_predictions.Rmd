@@ -311,7 +311,7 @@ b <- ggplot(data = chng, aes(col=chng$suc_chg)) +
   geom_sf(data = wtrshd_bndry, fill = "white", color = gray(.3), lwd = 1) +
   geom_sf()+
   scale_color_gradientn(colours = myPalette(100), limits = c(min(chng$suc_chg), max(chng$suc_chg)))+
-  labs(col = "\u0394 P") +  ggtitle("(B)", subtitle = "Santa Ana sucker") + 
+  labs(col = "\u0394 P") +  ggtitle("(D)", subtitle = "Santa Ana sucker") + 
   theme(panel.grid.major=element_line(colour="transparent"),panel.background = element_blank(),
         axis.text = element_blank(),axis.ticks = element_blank(),
         text = element_text(size=30))
@@ -319,7 +319,7 @@ c <- ggplot(data = chng, aes(col=chng$trt_chg)) +
   geom_sf(data = wtrshd_bndry, fill = "white", color = gray(.3), lwd = 1) +
   geom_sf()+
   scale_color_gradientn(colours = myPalette(100), limits = c(min(chng$trt_chg), max(chng$trt_chg)))+
-  labs(col = "\u0394 P") +  ggtitle("(C)", subtitle = "rainbow trout") + 
+  labs(col = "\u0394 P") +  ggtitle("(B)", subtitle = "rainbow trout") + 
   theme(panel.grid.major=element_line(colour="transparent"),panel.background = element_blank(),
         axis.text = element_blank(),axis.ticks = element_blank(),
         text = element_text(size=30))
@@ -327,7 +327,7 @@ d <- ggplot(data = chng, aes(col=chng$vir_chg)) +
   geom_sf(data = wtrshd_bndry, fill = "white", color = gray(.3), lwd = 1) +
   geom_sf()+
   scale_color_gradientn(colours = myPalette(100), limits = c(min(chng$vir_chg), max(chng$vir_chg)))+
-  labs(col = "\u0394 P") +  ggtitle("(D)", subtitle = "Least Bell's vireo") + 
+  labs(col = "\u0394 P") +  ggtitle("(E)", subtitle = "Least Bell's vireo") + 
   theme(panel.grid.major=element_line(colour="transparent"),panel.background = element_blank(),
         axis.text = element_blank(),axis.ticks = element_blank(),
         text = element_text(size=30))
@@ -335,7 +335,7 @@ e <- ggplot(data = chng, aes(col=chng$toa_chg)) +
   geom_sf(data = wtrshd_bndry, fill = "white", color = gray(.3), lwd = 1) +
   geom_sf()+
   scale_color_gradientn(colours = myPalette(100), limits = c(min(chng$toa_chg), max(chng$toa_chg)))+
-  labs(col = "\u0394 P") +  ggtitle("(E)", subtitle = "Arroyo toad") + 
+  labs(col = "\u0394 P") +  ggtitle("(C)", subtitle = "Arroyo toad") + 
   theme(panel.grid.major=element_line(colour="transparent"),panel.background = element_blank(),
         axis.text = element_blank(),axis.ticks = element_blank(),
         text = element_text(size=30))
@@ -374,25 +374,25 @@ g <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = chub_chg))
 h <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = suc_chg))+
   geom_violin()+geom_boxplot(width = .08)+
   labs(y="\u0394 P", x = NULL)+
-  ggtitle("(H)", subtitle = "Santa Ana sucker")+ 
+  ggtitle("(J)", subtitle = "Santa Ana sucker")+ 
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
 i <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = trt_chg))+
   geom_violin()+geom_boxplot(width = .08)+
   labs(y="\u0394 P", x = NULL)+
-  ggtitle("(I)", subtitle = "rainbow trout")+ 
+  ggtitle("(H)", subtitle = "rainbow trout")+ 
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
 j <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = vir_chg))+
   geom_violin()+geom_boxplot(width = .08)+
   labs(y="\u0394 P", x = NULL)+
-  ggtitle("(J)", subtitle = "Least Bell's vireo")+ 
+  ggtitle("(K)", subtitle = "Least Bell's vireo")+ 
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
 k <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = toa_chg))+
   geom_violin()+geom_boxplot(width = .08)+
   labs(y="\u0394 P", x = NULL)+
-  ggtitle("(K)", subtitle = "Arroyo toad")+ 
+  ggtitle("(I)", subtitle = "Arroyo toad")+ 
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
 l <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = tur_chg))+
@@ -410,8 +410,8 @@ p<-arrangeGrob(
   d + margin, j + margin, 
   e + margin, k + margin, 
   f + margin, l + margin, 
-  nrow = 6)
-ggsave("bio_chng.tiff", plot = p, dpi = 300, width = 15, height = 30, compression = "lzw")
+  nrow = 3)
+ggsave("bio_chng.tiff", plot = p, dpi = 300, width = 30, height = 15, compression = "lzw")
 
 
 
