@@ -65,7 +65,6 @@ load("biology_model/mod_turtle_rf.RData")
 load("biology_model/mod_sucker_rf.RData")
 load("biology_model/mod_trout_rf.RData")
 
-
 #load clusters and elevation data
 clusters<- st_read("C:/Users/JennyT/Documents/LitReview/RB4/StreamCat/COMID clustering.shp") %>% 
   data.frame() %>% 
