@@ -65,6 +65,7 @@ load("biology_model/mod_turtle_rf.RData")
 load("biology_model/mod_sucker_rf.RData")
 load("biology_model/mod_trout_rf.RData")
 
+
 #load clusters and elevation data
 clusters<- st_read("C:/Users/JennyT/Documents/LitReview/RB4/StreamCat/COMID clustering.shp") %>% 
   data.frame() %>% 
@@ -232,7 +233,7 @@ p <- ggplot(data = timeline, mapping = aes(x = year, y = avg)) +
                                                                "turtle" = "SW pond turtle", "vireo" = "Least Bell's vireo")))
  
   
-ggsave("spp_prob_timeseries.tiff", plot = p, dpi = 300, width = 25, height = 20, compression = "lzw") 
+ggsave("spp_prob_timeseries.tiff", plot = p, dpi = 300, width = 20, height = 15, compression = "lzw") 
 
 #get slopes for each spp so we can comment on the rate of change
 c <- summary(lm(avg ~ year, data = timeline[timeline$Species == "chub",]))
