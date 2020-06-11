@@ -1,0 +1,157 @@
+---
+title: "AllYr_ThreeYr_Comparrison"
+author: "Jenny Rogers"
+date: "June 11, 2020"
+output: html_document
+---
+
+
+```{r}
+
+library(tidyverse)
+library(sf)
+library(lubridate)
+library(RColorBrewer)
+library(gridExtra)
+library(randomForest)
+
+
+```
+
+
+```{r}
+#models based on streamflow metrics
+load("biology_model/mod_chub_rf_3.RData")
+load("biology_model/mod_vireo_rf_3.RData")
+load("biology_model/mod_toad_rf_3.RData")
+load("biology_model/mod_sucker_rf_3.RData")
+load("biology_model/mod_trout_rf_3.RData")
+
+load("biology_model/mod_chub_rf_all.RData")
+load("biology_model/mod_vireo_rf_all.RData")
+load("biology_model/mod_toad_rf_all.RData")
+load("biology_model/mod_sucker_rf_all.RData")
+load("biology_model/mod_trout_rf_all.RData")
+
+
+#load clusters and elevation data
+clusters<- st_read("C:/Users/JennyT/Documents/LitReview/RB4/StreamCat/COMID clustering.shp") %>% 
+  data.frame() %>% 
+  select(COMID, clstrCt, dam) %>% 
+  filter(clstrCt == 1 & dam == 0 )
+
+load("elv_comid.RData")
+
+#streamflow metric data
+#baseline flow
+load("bsflowmetest.RData")
+baseline_flow <- bsflowmetest %>% 
+  select(var, COMID, dtsl, est) %>% 
+  filter(COMID %in% clusters$COMID) %>% 
+  mutate(year = year(dtsl)) %>% 
+  spread(var, est)
+
+#future flow
+load("flowmetdt2.RData")
+future_flow <- flowmetdt2 %>% 
+  select(var, COMID, dtsl, est) %>% 
+  filter(COMID %in% clusters$COMID) %>% 
+  mutate(year = year(dtsl)) %>% 
+  spread(var, est)
+
+flow <- bind_rows(baseline_flow, future_flow)
+flow <- left_join(flow, elv, by = "COMID")
+
+#temperature data
+load("fut_strm_tmp_wtrshd.RData")
+load("baseline_stream_temp_wtrshd.RData")
+temp <- rbind(baseline_stream_temp, future) %>% 
+  filter(COMID %in% clusters$COMID) #filter to remove COMIDs in urban areas
+
+#filter to make the COMIDs line up with the temp (likely removing the coastline)
+flow <- flow %>% filter(COMID %in% temp$COMID) 
+
+rm(baseline_stream_temp, future, bsflowmetest, flowmetdt2, clusters, baseline_flow, future_flow, elv)
+
+
+
+
+
+```
+
+
+
+```{r}
+head(flow)
+
+biopred <- data.frame(
+  "COMID"  = flow$COMID,
+  "elv" = flow$elv,
+  "ElevCat" = flow$ElevCat,
+  "year" = flow$year,
+  "type" = ifelse(flow$year %in% c(2095, 1993), "wet",
+                  ifelse(flow$year %in% c(2010, 2100), "moderate", "dry")),
+  "time" = ifelse(flow$year %in% c(2010, 1993, 2014), "baseline", "future"),
+  "chub_all" = predict(mod_chub_rf_all, newdata = flow, type = "prob")[,2],
+  "sucker_all" = predict(mod_sucker_rf_all, newdata = flow, type = "prob")[,2],
+  "trout_all" = predict(mod_trout_rf_all, newdata = flow, type = "prob")[,2],
+  "vireo_all" = predict(mod_vireo_rf_all, newdata = flow, type = "prob")[,2],
+  "toad_all" = predict(mod_toad_rf_all, newdata = flow, type = "prob")[,2],
+  "chub_three" = predict(mod_chub_rf_3, newdata = flow, type = "prob")[,2],
+  "sucker_three" = predict(mod_sucker_rf_3, newdata = flow, type = "prob")[,2],
+  "trout_three" = predict(mod_trout_rf_3, newdata = flow, type = "prob")[,2],
+  "vireo_three" = predict(mod_vireo_rf_3, newdata = flow, type = "prob")[,2],
+  "toad_three" = predict(mod_toad_rf_3, newdata = flow, type = "prob")[,2]
+)
+
+
+
+biopred <- biopred %>% 
+  pivot_longer(cols = 7:16, names_to = "Species", values_to = "Probability") %>% 
+  separate(Species, into = c("Species", "Timeframe"), sep = "_") %>% 
+  filter(time == "future", type %in% c("dry", "wet"))
+
+summary(aov(Probability ~ elv + type + Timeframe, data=biopred[biopred$Species=="vireo",]))
+
+
+load("NHD_strm_rvr_map.RData")
+
+biopred <- left_join(NHD, biopred, by = "COMID") %>% 
+  filter(!is.na(Probability)) %>% 
+  mutate(type = ifelse(Timeframe == "all", "all", as.character(biopred$type)))
+
+load("wtrshd_bundry.RData")
+
+wtrshd_bndry<- st_transform(wtrshd_bndry, crs = st_crs(biopred))
+
+myPalette <- colorRampPalette(brewer.pal(9, "RdYlBu"))
+
+g <- ggplot(data = biopred, aes(col=biopred$Probability)) +
+  geom_sf(data = wtrshd_bndry, fill = "white", color = gray(.3), lwd = 1) +
+  geom_sf()+
+  facet_grid(rows = vars(Species), cols = vars(Timeframe, type), switch = "y")+
+  scale_color_gradientn(colours = myPalette(100), limits = c(0,1))+
+  labs(col = "Probability")  + 
+  theme(panel.grid.major=element_line(colour="transparent"),panel.background = element_blank(),
+        axis.text = element_blank(),axis.ticks = element_blank(),
+        text = element_text(size=25))
+
+ggsave("timeframe_map.tiff", plot = g, dpi = 300, width = 30, height = 15, compression = "lzw")
+
+f <- ggplot(biopred, aes(x = type, y = Probability, fill = Timeframe))+
+  geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+
+  labs(y="Probability", x = NULL)+
+  theme(text = element_text(size=30), 
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(), 
+        panel.border = element_rect(colour = "black", fill=NA, size=.5),
+        strip.text = element_text(size = 20, face = "bold"),
+        strip.background = element_rect(fill = "grey90", colour = "black"))+
+  facet_wrap(vars(Species), labeller = as_labeller(c("chub" = "Arroyo chub", "sucker" = "Santa Ana sucker",
+                                                               "toad" = "Arroyo toad", "trout" = "Rainbow trout",
+                                                               "turtle" = "SW pond turtle", "vireo" = "Least Bell's vireo")))
+
+ggsave("timeframe_boxplot.tiff", plot = f, dpi = 300, width = 15, height = 10, compression = "lzw")
+
+```
