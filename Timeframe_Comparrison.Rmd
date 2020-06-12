@@ -111,7 +111,22 @@ biopred <- biopred %>%
   separate(Species, into = c("Species", "Timeframe"), sep = "_") %>% 
   filter(time == "future", type %in% c("dry", "wet"))
 
-summary(aov(Probability ~ elv + type + Timeframe, data=biopred[biopred$Species=="vireo",]))
+summary(aov(Probability ~ type + Timeframe, data=biopred[biopred$Species=="chub",]))
+t.test(biopred$Probability[biopred$Species=="chub" & biopred$Timeframe == "three"], 
+       biopred$Probability[biopred$Species=="chub" & biopred$Timeframe == "all"])
+
+t.test(biopred$Probability[biopred$Species=="vireo" & biopred$Timeframe == "three"], 
+       biopred$Probability[biopred$Species=="vireo" & biopred$Timeframe == "all"])
+
+t.test(biopred$Probability[biopred$Species=="sucker" & biopred$Timeframe == "three"], 
+       biopred$Probability[biopred$Species=="sucker" & biopred$Timeframe == "all"])
+
+t.test(biopred$Probability[biopred$Species=="trout" & biopred$Timeframe == "three"], 
+       biopred$Probability[biopred$Species=="trout" & biopred$Timeframe == "all"])
+
+t.test(biopred$Probability[biopred$Species=="toad" & biopred$Timeframe == "three"], 
+       biopred$Probability[biopred$Species=="toad" & biopred$Timeframe == "all"])
+
 
 
 load("NHD_strm_rvr_map.RData")
@@ -129,7 +144,9 @@ myPalette <- colorRampPalette(brewer.pal(9, "RdYlBu"))
 g <- ggplot(data = biopred, aes(col=biopred$Probability)) +
   geom_sf(data = wtrshd_bndry, fill = "white", color = gray(.3), lwd = 1) +
   geom_sf()+
-  facet_grid(rows = vars(Species), cols = vars(Timeframe, type), switch = "y")+
+  facet_grid(rows = vars(Species), cols = vars(Timeframe, type), switch = "y", labeller = as_labeller(c("chub" = "Arroyo chub", "sucker" = "Santa Ana sucker",
+                                                               "toad" = "Arroyo toad", "trout" = "Rainbow trout",
+                                                               "turtle" = "SW pond turtle", "vireo" = "Least Bell's vireo", "all" = "All Year", "three" = "3-Year", "dry" = "Dry Year", "wet" = "Wet Year")))+
   scale_color_gradientn(colours = myPalette(100), limits = c(0,1))+
   labs(col = "Probability")  + 
   theme(panel.grid.major=element_line(colour="transparent"),panel.background = element_blank(),
