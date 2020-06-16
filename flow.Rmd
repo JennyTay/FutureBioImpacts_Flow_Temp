@@ -115,48 +115,45 @@ In the next code chunks, we want to calutate, tabulate, and plot the change in 5
 
 first we will read in the baseline flow metrics and the future flow metrics
 ```{r}
-NHD <- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16-18/NHDFLowline_Clip.shp")  %>% 
-  filter(FTYPE == "StreamRiver") %>% 
-  dplyr::select(COMID) %>% 
-  st_zm()
-
-clusters<- st_read("C:/Users/JennyT/Documents/LitReview/RB4/StreamCat/COMID clustering.shp") %>% 
-  data.frame() %>% 
-  select(COMID, clstrCt, dam) %>% 
-  filter(clstrCt == 1 & dam == 0 )
-
-load("elv_comid.RData")
-
-
-#baseline
-load("bsflowmetest.RData")
-baseline <- bsflowmetest %>% 
-  select(var, COMID, dtsl, est) %>% 
-  filter(var %in% c("x3_Hydroperiod", "x3_Q99", "x3_SFR", "x3_LowDur", "x3_HighNum"),
-         COMID %in% clusters$COMID) %>% 
-  mutate(year = year(dtsl),
-         time = "baseline",
-         type = ifelse(year ==1993, "wet",
-                       ifelse(year == 2010, "mod", "dry"))) %>% 
-  spread(var, est)
-
-#future
-load("flowmetdt2.RData")
-future <- flowmetdt2 %>% 
-  select(var, COMID, dtsl, est) %>% 
-  filter(var %in% c("x3_Hydroperiod", "x3_Q99", "x3_SFR", "x3_LowDur", "x3_HighNum"),
-         COMID %in% clusters$COMID) %>% 
-  mutate(year = year(dtsl),
-         time = "future",
-         type = ifelse(year ==2095, "wet",
-                       ifelse(year == 2100, "mod", "dry"))) %>% 
-  spread(var, est)
-
-flow <- bind_rows(baseline, future)
-flow <- left_join(flow, elv, by = "COMID")
-
-save(flow, file = "flowmet_all.RData")
-
+# NHD <- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16-18/NHDFLowline_Clip.shp")  %>% 
+#   filter(FTYPE == "StreamRiver") %>% 
+#   dplyr::select(COMID) %>% 
+#   st_zm()
+# 
+# load("clusters.RData")
+# 
+# load("elv_comid.RData")
+# 
+# 
+# #baseline
+# load("bsflowmetest.RData")
+# baseline <- bsflowmetest %>% 
+#   select(var, COMID, dtsl, est) %>% 
+#   filter(var %in% c("x3_Hydroperiod", "x3_Q99", "x3_SFR", "x3_LowDur", "x3_HighNum"),
+#          COMID %in% clusters$COMID) %>% 
+#   mutate(year = year(dtsl),
+#          time = "baseline",
+#          type = ifelse(year ==1993, "wet",
+#                        ifelse(year == 2010, "mod", "dry"))) %>% 
+#   spread(var, est)
+# 
+# #future
+# load("flowmetdt2.RData")
+# future <- flowmetdt2 %>% 
+#   select(var, COMID, dtsl, est) %>% 
+#   filter(var %in% c("x3_Hydroperiod", "x3_Q99", "x3_SFR", "x3_LowDur", "x3_HighNum"),
+#          COMID %in% clusters$COMID) %>% 
+#   mutate(year = year(dtsl),
+#          time = "future",
+#          type = ifelse(year ==2095, "wet",
+#                        ifelse(year == 2100, "mod", "dry"))) %>% 
+#   spread(var, est)
+# 
+# flow <- bind_rows(baseline, future)
+# flow <- left_join(flow, elv, by = "COMID")
+# 
+# save(flow, file = "flowmet_all.RData")
+# 
 
 
 ```

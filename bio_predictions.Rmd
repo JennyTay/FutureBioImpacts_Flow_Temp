@@ -17,9 +17,9 @@ library(randomForest)
 
 ```
 
-In this document, we make predictions for the biology using the stream temp and the hydrologic metrics and the already built biological models.
+In this document, we make predictions for the probability of biological occurrences using the stream temp and the hydrologic metrics and the already built biological models.
 
-first, we build a model to predict spp presence or absence with the temperature data. we run PCA on the training data so that we run a logistic regression with spp presence and absece data using PCA predictor variables. This lets us use all the temp varialbes for each spp, but ensures that the variables are not correlated.  Then we run the logistic regression..
+First, we build a model to predict spp presence or absence with the temperature data. we run PCA on the training data so that we run a logistic regression with spp presence and absece data using PCA predictor variables. This lets us use all the temp varialbes for each spp, but ensures that the variables are not correlated.  Then we run the logistic regression..
 ```{r}
 
 #load("L:/Flow ecology and climate change_ES/Jenny/AirTemp/Modeling/spp_tmp_train_dat.RData")
@@ -67,10 +67,12 @@ load("biology_model/mod_trout_rf.RData")
 
 
 #load clusters and elevation data
-clusters<- st_read("C:/Users/JennyT/Documents/LitReview/RB4/StreamCat/COMID clustering.shp") %>% 
-  data.frame() %>% 
-  select(COMID, clstrCt, dam) %>% 
-  filter(clstrCt == 1 & dam == 0 )
+# clusters<- st_read("C:/Users/JennyT/Documents/LitReview/RB4/StreamCat/COMID clustering.shp") %>% 
+#   data.frame() %>% 
+#   select(COMID, clstrCt, dam) %>% 
+#   filter(clstrCt == 1 & dam == 0 )
+# save(clusters, file = "clusters.RData")
+load("clusters.RData")
 
 load("elv_comid.RData")
 

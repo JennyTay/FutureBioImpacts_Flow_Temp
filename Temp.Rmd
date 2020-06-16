@@ -76,39 +76,39 @@ load("fut_strm_tmp.RData")
 
 In this next chunk of code, we will make a watershed and elevation to COMID conversion file, so we can summarize by watershed or elevation
 ```{r}
-NHD <- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16-18/NHDFLowline_Clip.shp")  %>% 
-  filter(FTYPE == "StreamRiver") %>% 
-  dplyr::select(COMID) %>% 
-  st_zm()
-
-wtrshd_bndry<- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16-18/RB4watershedBoundaty.shp") %>% 
-  dplyr::select(NAME) %>% 
-  st_zm() %>% 
-  rename(watershed = NAME)
-
-#assign < 1000ft as low, 1000-5000 as mid, and higher than 5000 as high
-# elv <- read.csv("C:/Users/JennyT/Documents/LitReview/RB4/StreamCat/Elevation_Region18.csv") %>% 
-#   dplyr::select(COMID, ElevCat) %>% 
-#   mutate(elv = ifelse(ElevCat<375, "low", "high"))
-# save(elv, file = "elv_comid.RData")
-load("elv_comid.RData")
-
-flow_wtrshed<- st_transform(NHD, crs = st_crs(wtrshd_bndry))
-flow_wtrshed<- st_join(wtrshd_bndry, flow_wtrshed) %>% data.frame() %>% dplyr::select(-geometry)
-
-
-future <- left_join(future, flow_wtrshed, by = "COMID") %>% 
-  filter(!is.na(watershed))
-future <- left_join(future, elv, by = "COMID")
-
-baseline_stream_temp <- left_join(baseline_stream_temp, flow_wtrshed, by = "COMID") %>% 
-  filter(!is.na(watershed))
-baseline_stream_temp <- left_join(baseline_stream_temp, elv, by = "COMID")
-
-rm(NHD, wtrshd_bndry, elv)
-
-save(future, file = "fut_strm_tmp_wtrshd.RData", compress = "xz")
-save(baseline_stream_temp, file = "baseline_stream_temp_wtrshd.RData", compress = "xz")
+# NHD <- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16-18/NHDFLowline_Clip.shp")  %>% 
+#   filter(FTYPE == "StreamRiver") %>% 
+#   dplyr::select(COMID) %>% 
+#   st_zm()
+# 
+# wtrshd_bndry<- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16-18/RB4watershedBoundaty.shp") %>% 
+#   dplyr::select(NAME) %>% 
+#   st_zm() %>% 
+#   rename(watershed = NAME)
+# 
+# #assign < 1000ft as low, 1000-5000 as mid, and higher than 5000 as high
+# # elv <- read.csv("C:/Users/JennyT/Documents/LitReview/RB4/StreamCat/Elevation_Region18.csv") %>% 
+# #   dplyr::select(COMID, ElevCat) %>% 
+# #   mutate(elv = ifelse(ElevCat<375, "low", "high"))
+# # save(elv, file = "elv_comid.RData")
+# load("elv_comid.RData")
+# 
+# flow_wtrshed<- st_transform(NHD, crs = st_crs(wtrshd_bndry))
+# flow_wtrshed<- st_join(wtrshd_bndry, flow_wtrshed) %>% data.frame() %>% dplyr::select(-geometry)
+# 
+# 
+# future <- left_join(future, flow_wtrshed, by = "COMID") %>% 
+#   filter(!is.na(watershed))
+# future <- left_join(future, elv, by = "COMID")
+# 
+# baseline_stream_temp <- left_join(baseline_stream_temp, flow_wtrshed, by = "COMID") %>% 
+#   filter(!is.na(watershed))
+# baseline_stream_temp <- left_join(baseline_stream_temp, elv, by = "COMID")
+# 
+# rm(NHD, wtrshd_bndry, elv)
+# 
+# save(future, file = "fut_strm_tmp_wtrshd.RData", compress = "xz")
+# save(baseline_stream_temp, file = "baseline_stream_temp_wtrshd.RData", compress = "xz")
 
 
 ```
