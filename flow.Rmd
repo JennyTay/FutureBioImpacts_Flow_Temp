@@ -38,9 +38,26 @@ med <- quantile(baseline_prcip$total, probs = 0.66)
 
 baseline_prcip <- baseline_prcip %>% 
   mutate(third = ifelse(total<=low, 1,
-                        ifelse(total>low & total<= med, 2, 3))) %>% 
-  arrange(third, rank)
+                        ifelse(total>low & total<= med, 2, 3))) 
 
+#calucate the percentiles of the 3 years of data so we know how 3 years of data from our selected years compare
+c <- baseline_prcip$total
+e <- NULL
+for (i in 1:(length(c)-2)){
+
+d <- sum(c[i]+c[i+1]+c[i+2])
+e <- rbind(e, d)
+
+}
+f <- rbind(NA, NA, e)
+baseline_prcip$thryrsum <- f
+baseline_prcip <- baseline_prcip %>% 
+  mutate(rank2 = min_rank(thryrsum))
+
+#using 3 year running sums, the percentiles are:
+#1993: 0.9032258
+#2010: 0.3225806
+#2014: 0.03225806
 
 ```
 
@@ -103,9 +120,29 @@ secon_third <- quantile(avg$annl_prp_sum, probs = 0.66)
 avg$third <- ifelse(avg$annl_prp_sum <=first_third, 1,
                     ifelse(avg$annl_prp_sum >= first_third & avg$annl_prp_sum <= secon_third, 2, 3))
 
-# 2095 is the 2nd wet year
+# 2095 is the wet watryear
 # 2090 is the dry wateryr, 
-# 2100 is the moderate wateryr 
+# 2100 is the mod wateryr 
+
+
+#calucate the percentiles of the 3 years of data so we know how 3 years of data from our selected years compare
+c <- avg$annl_prp_sum
+e <- NULL
+for (i in 1:(length(c)-2)){
+
+d <- sum(c[i]+c[i+1]+c[i+2])
+e <- rbind(e, d)
+
+}
+f <- rbind(NA, NA, e)
+avg$thryrsum <- f
+avg <- avg %>% 
+  mutate(rank2 = min_rank(thryrsum))
+
+#using 3 year running sums, the percentiles are:
+#2095: 1.0 (wettest 3 year period)
+#2090: 0.0625 (driest 3 year period)
+#2100: 0.375
 
 ```
 
