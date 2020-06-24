@@ -147,9 +147,13 @@ g <- ggplot(data = biopred, aes(col=biopred$Probability)) +
   labs(col = "Probability")  + 
   theme(panel.grid.major=element_line(colour="transparent"),panel.background = element_blank(),
         axis.text = element_blank(),axis.ticks = element_blank(),
-        text = element_text(size=25))
+        text = element_text(size=25),
+        strip.text = element_text(size = 20, face = "bold"),
+        strip.background = element_rect(fill = "grey90", colour = "black"))
 
-ggsave("timeframe_map.tiff", plot = g, dpi = 300, width = 30, height = 15, compression = "lzw")
+ggsave("fig6.tiff", plot = g, dpi = 300, width = 19.05, height = 20, compression = "lzw")
+
+
 
 f <- ggplot(biopred, aes(x = type, y = Probability, fill = Timeframe))+
   geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+

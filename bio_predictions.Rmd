@@ -235,7 +235,7 @@ p <- ggplot(data = timeline, mapping = aes(x = year, y = avg)) +
                                                                "turtle" = "SW pond turtle", "vireo" = "Least Bell's vireo")))
  
   
-ggsave("spp_prob_timeseries.tiff", plot = p, dpi = 300, width = 20, height = 15, compression = "lzw") 
+ggsave("fig2.tiff", plot = p, dpi = 300, width = 19.05, height = 12, compression = "lzw") 
 
 #get slopes for each spp so we can comment on the rate of change
 c <- summary(lm(avg ~ year, data = timeline[timeline$Species == "chub",]))
@@ -404,7 +404,7 @@ l <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = tur_chg))+
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
 
-margin = theme(plot.margin = unit(c(5,5,5,5), "mm"))
+margin = theme(plot.margin = unit(c(2,2,2,2), "mm"))
 p<-arrangeGrob(
   a + margin, g + margin, 
   b + margin, h + margin, 
@@ -413,7 +413,7 @@ p<-arrangeGrob(
   e + margin, k + margin, 
   f + margin, l + margin, 
   nrow = 3)
-ggsave("bio_chng.tiff", plot = p, dpi = 300, width = 30, height = 15, compression = "lzw")
+ggsave("fig3.tiff", plot = p, dpi = 300, width = 19.05, height = 15, compression = "lzw")
 
 
 
@@ -450,7 +450,7 @@ a <- ggplot(data = biopred, mapping = aes(x = factor(elv, levels = c("low", "hig
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), 
         legend.title = element_blank(), 
-        legend.position = c(.21, 1), 
+        legend.position = c(1, 1), 
         legend.justification = c("right", "top"),
         legend.box.background = element_rect(color="black", size=.5),
         strip.text = element_text(size = 20, face = "bold"),
@@ -496,11 +496,11 @@ f <- ggplot(data = biopred, mapping = aes(x = factor(elv, levels = c("low", "hig
         strip.text = element_text(size = 20, face = "bold"),
         strip.background = element_rect(fill = "lightblue", colour = "black"))
 
-margin = theme(plot.margin = unit(c(5,5,5,5), "mm"))
+margin = theme(plot.margin = unit(c(2,2,2,2), "mm"))
 p<-arrangeGrob(
   a + margin, b+ margin, c+ margin, d+ margin, 
   e+ margin, f + margin, nrow = 2)
-ggsave("bio_chng.tiff", plot = p, dpi = 300, width = 30, height = 15, compression = "lzw")
+ggsave("fig4.tiff", plot = p, dpi = 300, width = 19.05, height = 12, compression = "lzw")
 
 
 ```
@@ -583,7 +583,7 @@ p <- ggplot(data = comp3, aes(x = factor(time), y = Probability, fill = metric))
                                                                "toad" = "Arroyo toad", "trout" = "Rainbow trout",
                                                                "turtle" = "SW pond turtle", "vireo" = "Least Bell's vireo"))) 
 
-ggsave("flow_v_temp.tiff", plot = p, dpi = 300, width = 15, height = 10, compression = "lzw")
+ggsave("fig5.tiff", plot = p, dpi = 300, width = 19.05, height = 12, compression = "lzw")
 
 
 #table for the average chang ein flow vs the average change in T
