@@ -133,7 +133,9 @@ temperature_C<- left_join(temperature_C, dat, by = c("COMID", "date")) #left joi
 #calulate mean air Temp (TempAir_C) as the average of the max and min air Temp
 temperature_C <- temperature_C %>% 
   mutate(Tmean_C_liv = (Tmax_C_liv+Tmin_C_liv)/2,
-         year = year(date))
+         year = year(date)) %>% 
+  filter(!is.na(Tmax_C_liv))
+
 
 
 
@@ -153,5 +155,13 @@ cor(temperature_C$temp_C, temperature_C$Tmean_C_liv, use = "complete.obs")
 error <- (temperature_C$temp_C - temperature_C$Tmean_C_liv)
 errorsq <- error^2
 RMSE <- sqrt(mean(errorsq, na.rm = TRUE))
-mean(temperature_C$temp_C, na.rm = T)
-mean(temperature_C$Tmean_C_liv, na.rm = T)
+
+yrlyRMSE <- temperature_C %>% 
+  group_by(year) %>% 
+  summarise(RMSE = sqrt(mean((temp_C - Tmean_C_liv)^2, na.rm = TRUE)),
+            meanLiv = mean(Tmean_C_liv),
+            meanHal = mean(temp_C, na.rm = T))
+
+
+mean(temperature_C$temp_C, na.rm = T) #18.97293
+mean(temperature_C$Tmean_C_liv, na.rm = T) #19.52786
