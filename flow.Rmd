@@ -399,7 +399,7 @@ in this chunk of code, we want to the comapre the change from baseline to future
 ```{r}
 
 #first we want to do boxplots that show the distribtion of change for each variables
-scale2 <- function(x, na.rm = FALSE) (x - mean(x, na.rm = na.rm)) / sd(x, na.rm)
+
 
 chng <- flow %>%
   pivot_longer(6:15, names_to = "variable", values_to = "value") %>% 
@@ -419,44 +419,55 @@ chng <- unique(chng)
   
 a <- ggplot(data = chng[chng$variable == "HighNum",], mapping = aes(x = factor(type, levels = c("all", "dry", "mod", "wet")), y = change, fill = duration))+
   geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+
-  labs(title ="HighNum", x = "Water Year Type")+
+  labs(title ="Number of Storms", x = "Water Year Type", y = "Change (Future - Baseline)")+
   geom_hline(yintercept = 0, lwd = 1, lty = 3)+
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5),
+        axis.title.y = element_text(size = 20), 
+        legend.position = c(.22, .98), 
+        legend.justification = c("right", "top"),
+        legend.title = element_text(size = 20),
+        legend.text = element_text(size = 15),
+        legend.box.background = element_rect(colour = "black"))+
+  coord_cartesian(ylim = c(-2,2))
 
 b <- ggplot(data = chng[chng$variable == "Hydroperiod",], mapping = aes(x = factor(type, levels = c("all", "dry", "mod", "wet")), y = change, fill = duration))+
   geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+
-  labs(title="Hydroperiod", x = NULL)+
+  labs(title="Hydroperiod", x = NULL, y = NULL)+
   geom_hline(yintercept = 0, lwd = 1, lty = 3)+
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none")
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none")+
+  coord_cartesian(ylim = c(-2,2))
 
 c <- ggplot(data = chng[chng$variable == "SFR",], mapping = aes(x = factor(type, levels = c("all", "dry", "mod", "wet")), y = change, fill = duration))+
   geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+
-  labs(title="SFR", x = NULL)+
+  labs(title="SFR", x = NULL, y = NULL)+
   geom_hline(yintercept = 0, lwd = 1, lty = 3)+
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none")
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none")+
+  coord_cartesian(ylim = c(-2,2))
 
 d <- ggplot(data = chng[chng$variable == "LowDur",], mapping = aes(x = factor(type, levels = c("all", "dry", "mod", "wet")), y = change, fill = duration))+
   geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+
-  labs(title="LowDur", x = NULL)+
+  labs(title="Low Duration", x = NULL, y = NULL)+
   geom_hline(yintercept = 0, lwd = 1, lty = 3)+
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none")
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none")+
+  coord_cartesian(ylim = c(-2,2))
 
 e <- ggplot(data = chng[chng$variable == "Q99",], mapping = aes(x = factor(type, levels = c("all", "dry", "mod", "wet")), y = change, fill = duration))+
   geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+
-  labs(title="Q99", x = NULL)+
+  labs(title="Q99", x = NULL, y = NULL)+
   geom_hline(yintercept = 0, lwd = 1, lty = 3)+
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none")
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none")+
+  coord_cartesian(ylim = c(-2,2))
 
 margin = theme(plot.margin = unit(c(5,5,5,5), "mm"))
 p<-arrangeGrob(
-  a + margin, b+ margin, c+ margin, d+ margin, 
-  e+ margin, nrow = 5)
-ggsave("figy.tiff", plot = p, dpi = 300, width = 10, height = 25, compression = "lzw")
+  a + margin, e+ margin, d+ margin, b+ margin, 
+  c+ margin, nrow = 2)
+ggsave("figy.tiff", plot = p, dpi = 300, width = 20, height = 10, compression = "lzw")
 
 
 
