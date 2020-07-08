@@ -25,50 +25,36 @@ line 1038 Air_temp_future MIROC5_stream_temp
 In this first chunk of code, we are reading in the stream temperature models, the baseline stream temperatures metrics and the projected stream temperature metrics for the three GCMs. The files are currently in other folders on the sccwrp L drive, so we read them in, and then re-save to this folder.  We average the metrics from each GCM and save the file as 'future'.
 
 ```{r}
-# load("L:/Flow ecology and climate change_ES/Jenny/AirTemp/Modeling/mod_mean.rda")
+# load("C:/Users/JennyT/Documents/LitReview/RB4/AirTemp/Modeling/mod_mean.rda")
 # save(mod_mean, file = "mean_temp_model.rda")
 load("mean_temp_model.rda")
 
-
-# load("L:/Flow ecology and climate change_ES/Jenny/AirTemp/Modeling/mod_max.rda")
+# 
+# load("C:/Users/JennyT/Documents/LitReview/RB4/AirTemp/Modeling/mod_max.rda")
 # save(mod_max, file = "max_temp_model.rda")
 load("max_temp_model.rda")
-# 
-# load("L:/Flow ecology and climate change_ES/Jenny/AirTemp/Modeling/mod_min.rda")
+
+# load("C:/Users/JennyT/Documents/LitReview/RB4/AirTemp/Modeling/mod_min.rda")
 # save(mod_min, file = "min_temp_model.rda")
 load("min_temp_model.rda")
 
-# load('L:/Flow ecology and climate change_ES/Jenny/AirTemp/Modeling/baseline_stream_temp_species_predictions.RData')
-# baseline_stream_temp <- baseline_stream_temp_species_predictions %>%
-#   select(1:8) %>% 
-#   ungroup() %>% 
+# load('C:/Users/JennyT/Documents/LitReview/RB4/AirTemp/Modeling/baseline_stream_temp.RData')
+# baseline_stream_temp <- baseline_stream_temp  %>%
+#   ungroup() %>%
 #   data.frame()
 # baseline_stream_temp <- baseline_stream_temp[is.finite(rowSums(baseline_stream_temp)),]
 # save(baseline_stream_temp, file = "baseline_stream_temp.RData", compress = "xz")
-# rm(baseline_stream_temp_species_predictions)
 load("baseline_stream_temp.RData")
 
-# load('L:/Flow ecology and climate change_ES/Jenny/AirTemp/Modeling/MIROC5_stream_temp.RData')
-# load('L:/Flow ecology and climate change_ES/Jenny/AirTemp/Modeling/CCSM4_stream_temp.RData')
-# load('L:/Flow ecology and climate change_ES/Jenny/AirTemp/Modeling/CanESM2_stream_temp.RData')
+# load('C:/Users/JennyT/Documents/LitReview/RB4/AirTemp/Modeling/fut_stream_temp.RData')
+# fut_stream_temp <- fut_stream_temp  %>%
+#   ungroup() %>%
+#   data.frame()
 # 
-# future <- data.frame(
-#   "COMID" = MIROC5_stream_temp$COMID,
-#   "year" = MIROC5_stream_temp$year,
-#   "Max_Wkly_Mean_StreamT" = (MIROC5_stream_temp$Max_Wkly_Mean_StreamT + CCSM4_stream_temp$Max_Wkly_Mean_StreamT + CanESM2_stream_temp$Max_Wkly_Mean_StreamT) / 3,
-#   "Max_Wkl_Max_StreamT" = (MIROC5_stream_temp$Max_Wkl_Max_StreamT + CCSM4_stream_temp$Max_Wkl_Max_StreamT + CanESM2_stream_temp$Max_Wkl_Max_StreamT) / 3,
-#   "Min_Wkl_Min_StreamT" = (MIROC5_stream_temp$Min_Wkl_Min_StreamT + CCSM4_stream_temp$Min_Wkl_Min_StreamT + CanESM2_stream_temp$Min_Wkl_Min_StreamT) / 3,
-#   "Max_Wkl_Rng_StreamT" = (MIROC5_stream_temp$Max_Wkl_Rng_StreamT + CCSM4_stream_temp$Max_Wkl_Rng_StreamT + CanESM2_stream_temp$Max_Wkl_Rng_StreamT) / 3,
-#   "Mean_Wkl_Rng_StreamT" = (MIROC5_stream_temp$Mean_Wkl_Rng_StreamT + CCSM4_stream_temp$Mean_Wkl_Rng_StreamT + CanESM2_stream_temp$Mean_Wkl_Rng_StreamT) / 3,
-#   "Max_Wkl_Max_StreamT_grt_30_" = (MIROC5_stream_temp$Max_Wkl_Max_StreamT_grt_30_ + CCSM4_stream_temp$Max_Wkl_Max_StreamT_grt_30_ + CanESM2_stream_temp$Max_Wkl_Max_StreamT_grt_30_) / 3
-# )
-# 
-# 
-# future <- future[is.finite(rowSums(future)),]
+# future <- fut_stream_temp[is.finite(rowSums(fut_stream_temp)),]
 # 
 # save(future, file = "fut_strm_tmp.RData", compress = "xz")
-# 
-# rm(CanESM2_stream_temp, MIROC5_stream_temp, CCSM4_stream_temp)
+
 
 load("fut_strm_tmp.RData")
 
@@ -76,19 +62,19 @@ load("fut_strm_tmp.RData")
 
 In this next chunk of code, we will make a watershed and elevation to COMID conversion file, so we can summarize by watershed or elevation
 ```{r}
-# NHD <- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16-18/NHDFLowline_Clip.shp")  %>% 
-#   filter(FTYPE == "StreamRiver") %>% 
-#   dplyr::select(COMID) %>% 
+# NHD <- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16-18/NHDFLowline_Clip.shp")  %>%
+#   filter(FTYPE == "StreamRiver") %>%
+#   dplyr::select(COMID) %>%
 #   st_zm()
 # 
-# wtrshd_bndry<- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16-18/RB4watershedBoundaty.shp") %>% 
-#   dplyr::select(NAME) %>% 
-#   st_zm() %>% 
+# wtrshd_bndry<- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16-18/RB4watershedBoundaty.shp") %>%
+#   dplyr::select(NAME) %>%
+#   st_zm() %>%
 #   rename(watershed = NAME)
 # 
 # #assign < 1000ft as low, 1000-5000 as mid, and higher than 5000 as high
-# # elv <- read.csv("C:/Users/JennyT/Documents/LitReview/RB4/StreamCat/Elevation_Region18.csv") %>% 
-# #   dplyr::select(COMID, ElevCat) %>% 
+# # elv <- read.csv("C:/Users/JennyT/Documents/LitReview/RB4/StreamCat/Elevation_Region18.csv") %>%
+# #   dplyr::select(COMID, ElevCat) %>%
 # #   mutate(elv = ifelse(ElevCat<375, "low", "high"))
 # # save(elv, file = "elv_comid.RData")
 # load("elv_comid.RData")
@@ -97,18 +83,18 @@ In this next chunk of code, we will make a watershed and elevation to COMID conv
 # flow_wtrshed<- st_join(wtrshd_bndry, flow_wtrshed) %>% data.frame() %>% dplyr::select(-geometry)
 # 
 # 
-# future <- left_join(future, flow_wtrshed, by = "COMID") %>% 
+# future <- left_join(future, flow_wtrshed, by = "COMID") %>%
 #   filter(!is.na(watershed))
 # future <- left_join(future, elv, by = "COMID")
 # 
-# baseline_stream_temp <- left_join(baseline_stream_temp, flow_wtrshed, by = "COMID") %>% 
+# baseline_stream_temp <- left_join(baseline_stream_temp, flow_wtrshed, by = "COMID") %>%
 #   filter(!is.na(watershed))
 # baseline_stream_temp <- left_join(baseline_stream_temp, elv, by = "COMID")
 # 
 # rm(NHD, wtrshd_bndry, elv)
-# 
-# save(future, file = "fut_strm_tmp_wtrshd.RData", compress = "xz")
-# save(baseline_stream_temp, file = "baseline_stream_temp_wtrshd.RData", compress = "xz")
+
+save(future, file = "fut_strm_tmp_wtrshd.RData", compress = "xz")
+save(baseline_stream_temp, file = "baseline_stream_temp_wtrshd.RData", compress = "xz")
 
 
 ```
@@ -144,6 +130,10 @@ bslne_CI <- baseline_stream_temp %>%
 
 strm_tmp_all <- rbind(bslne_CI, fut_CI)
 
+#filter out all altered NHD reaches
+load("clusters.Rdata")
+strm_tmp_all <- strm_tmp_all %>% 
+  filter(COMID %in% clusters$COMID)
 
 
 
@@ -232,9 +222,9 @@ a <- ggplot(data = yr, mapping = aes(x = year, y = avg)) +
         axis.text.y = element_text(size = 20),
         title = element_text(size = 30))+
   scale_x_continuous(breaks = seq(1980, 2100, by = 10))+
-  scale_y_continuous(breaks = seq(16, 34, by = 2))+
+  scale_y_continuous(breaks = seq(12, 34, by = 2))+
   labs(x = NULL, y = "Temp (°C)", title = "Max 7-Day Mean (°C)")+
-  geom_text(x = 2005, y = 29, label = lm_eqn(df=yr), parse = TRUE, size = 10)
+  geom_text(x = 2005, y = 18, label = lm_eqn(df=yr), parse = TRUE, size = 10)
   
 #maximum 7-day maximum
 y <- yr$max; x <- yr$year
@@ -251,9 +241,9 @@ b <- ggplot(data = yr, mapping = aes(x = year, y = max)) +
         axis.text.y = element_text(size = 20),
         title = element_text(size = 30))+
   scale_x_continuous(breaks = seq(1980, 2100, by = 10))+
-  scale_y_continuous(breaks = seq(22, 40, by = 2))+
+  scale_y_continuous(breaks = seq(14, 44, by = 2))+
   labs(x = NULL, y = "Temp (°C)", title = "Max 7-Day Max (°C)")+
-  geom_text(x = 2005, y = 39, label = lm_eqn(df=yr), parse = TRUE, size = 10)
+  geom_text(x = 2005, y = 20, label = lm_eqn(df=yr), parse = TRUE, size = 10)
 
 #minimum 7-day min
 y <- yr$min; x <- yr$year
@@ -270,9 +260,9 @@ c <- ggplot(data = yr, mapping = aes(x = year, y = min)) +
         axis.text.y = element_text(size = 20),
         title = element_text(size = 30))+
   scale_x_continuous(breaks = seq(1980, 2100, by = 10))+
-  scale_y_continuous(breaks = seq(4, 20, by = 2))+
+  scale_y_continuous(breaks = seq(4, 26, by = 2))+
   labs(x = "Year", y = "Temp (°C)", title = "Min 7-Day Min (°C)")+
-  geom_text(x = 2005, y = 17, label = lm_eqn(df=yr), parse = TRUE, size = 10)
+  geom_text(x = 2005, y = 9, label = lm_eqn(df=yr), parse = TRUE, size = 10)
 
 margin = theme(plot.margin = unit(c(5,7,5,5), "mm"))
 p<-arrangeGrob(
@@ -333,19 +323,19 @@ chng <- data.frame(
 round(colMeans(chng),2)
 
 round(apply(chng, 2, function (x){
-  quantile(x, probs = 0.95)
+  quantile(x, probs = 0.05)
 }), 2)
 
 #join back with NHD so that we can plot it spatially
-# NHD <- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16-18/NHDFLowline_Clip.shp") %>% 
-#   filter(FTYPE == "StreamRiver") %>% 
+# NHD <- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16-18/NHDFLowline_Clip.shp") %>%
+#   filter(FTYPE == "StreamRiver") %>%
 #   dplyr::select(COMID)
-# save(NHD, file = "NHD_strm_rvr_map.RData")
-load("NHD_strm_rvr_map.RData")
-chng <- left_join(NHD, chng, by = "COMID") %>% 
-  filter(!is.na(max))
-
-save(chng, file = "tmp_metrics_change.RData")
+# # save(NHD, file = "NHD_strm_rvr_map.RData")
+# load("NHD_strm_rvr_map.RData")
+# chng <- left_join(NHD, chng, by = "COMID") %>% 
+#   filter(!is.na(max))
+# 
+# save(chng, file = "tmp_metrics_change.RData")
 load("tmp_metrics_change.RData")
 
 # wtrshd_bndry<- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16-18/RB4watershedBoundaty.shp") %>% 
@@ -401,6 +391,7 @@ e <- ggplot(data = chng, aes(col=chng$grt30)) +
 comid_elv <- strm_tmp_all %>% 
   select(COMID, elv) %>% unique
 chng <- left_join(chng, comid_elv, by = "COMID")
+chng <- data.frame(chng)
 
 round(colMeans(chng[chng$elv=="high", 2:6]),2)
 round(colMeans(chng[chng$elv=="low", 2:6]),2)
