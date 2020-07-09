@@ -1,0 +1,50 @@
+---
+title: "StudyRegion"
+author: "Jenny Rogers"
+date: "July 8, 2020"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(sf)
+
+#load all data
+
+NHD <- st_read("C:/Users/JennyT/Documents/LitReview/RB4/StreamCat/NHDPlusV21_CA_18_NHDSnapshot_05/NHDPlusCA/NHDPlus18/NHDSnapshot/Hydrography/NHDFlowline.shp")%>% st_zm() %>% 
+  filter(FTYPE %in% c("StreamRiver"))
+box = c(xmin = -120, ymin = 32, xmax = -116.5, ymax = 35)
+test <- st_crop(NHD, box)
+load("wtrshd_bundry.Rdata")
+
+tmppts <- st_read("C:/Users/JennyT/Documents/LitReview/RB4/AirTemp/Modeling/COMIDs_in_Model_Points.shp")
+tmppts <- tmppts %>% 
+  filter(COMID != 22563116 & COMID != 22660257)
+
+flwpts <- read.csv("C:/Users/JennyT/Documents/LitReview/RB4/ReachesKellyModeled/gaugelocations_ashmita.csv")
+names(flwpts)[2:3] <- c("Latitude", "Longitude")
+flwpts <- st_as_sf(flwpts, coords = c("Longitude", "Latitude"), crs = st_crs(tmppts))
+
+mdlwtrshds1 <- st_read("C:/Users/JennyT/Documents/LitReview/RB4/ReachesKellyModeled/catchments_20180405/Catchments_Merge_20180405.shp")
+mdlwtrshds2 <- st_read("C:/Users/JennyT/Documents/LitReview/RB4/ReachesKellyModeled/watersheds_20180414/ws_20180414.shp")
+mdlwtrshds3 <- st_read("C:/Users/JennyT/Documents/LitReview/RB4/ReachesKellyModeled/Catchments_kenny/BioSites_watersheds_17Jul18/santaclara_tribs_watersheds.shp")
+mdlwtrshds4 <- st_read("C:/Users/JennyT/Documents/LitReview/RB4/ReachesKellyModeled/Catchments_kenny/BioSites_watersheds_17Jul18/watersheds_12Jul18.shp")
+
+
+
+ggplot() +
+  geom_sf(data = test, color = "lightblue") +
+  geom_sf(data = wtrshd_bndry, fill = "white", alpha = 0, color = gray(.3), lwd = 1) +
+  geom_sf(data = mdlwtrshds1, alpha = .8, color = gray(.3)) +
+  geom_sf(data = mdlwtrshds2, alpha = .8, color = gray(.3)) +
+  geom_sf(data = mdlwtrshds3, alpha = .8, color = gray(.3)) +
+  geom_sf(data = mdlwtrshds4, alpha = .8, color = gray(.3)) + 
+  geom_sf(data = tmppts, color = "orange") +
+  geom_sf(data = flwpts, color = "blue") +
+  theme(panel.grid.major=element_line(colour="transparent"),panel.background = element_blank(),
+        axis.text = element_blank(),axis.ticks = element_blank(),
+        text = element_text(size=30))
+
+
+#filter out reaches we didn't do, add in legend, north arrow, scale bar, color NHD reaches by elevation
+```
