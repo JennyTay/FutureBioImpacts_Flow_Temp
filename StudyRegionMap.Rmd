@@ -8,13 +8,25 @@ output: html_document
 ```{r}
 library(tidyverse)
 library(sf)
+library(raster)
+library(cowplot)
+library(gridExtra)
+library(ggspatial)
 
 #load all data
 
 NHD <- st_read("C:/Users/JennyT/Documents/LitReview/RB4/StreamCat/NHDPlusV21_CA_18_NHDSnapshot_05/NHDPlusCA/NHDPlus18/NHDSnapshot/Hydrography/NHDFlowline.shp")%>% st_zm() %>% 
   filter(FTYPE %in% c("StreamRiver"))
-box = c(xmin = -120, ymin = 32, xmax = -116.5, ymax = 35)
-test <- st_crop(NHD, box)
+box = c(xmin = -120, ymin = 32, xmax = -116.5, ymax = 34.85)
+NHD <- st_crop(NHD, box)
+
+load("clusters.RData")
+
+clusters <- NHD  %>% 
+  dplyr::select(COMID) %>%
+  dplyr::filter(COMID %in% clusters$COMID) %>% 
+  st_zm()
+
 load("wtrshd_bundry.Rdata")
 
 tmppts <- st_read("C:/Users/JennyT/Documents/LitReview/RB4/AirTemp/Modeling/COMIDs_in_Model_Points.shp")
@@ -31,20 +43,56 @@ mdlwtrshds3 <- st_read("C:/Users/JennyT/Documents/LitReview/RB4/ReachesKellyMode
 mdlwtrshds4 <- st_read("C:/Users/JennyT/Documents/LitReview/RB4/ReachesKellyModeled/Catchments_kenny/BioSites_watersheds_17Jul18/watersheds_12Jul18.shp")
 
 
+#make inset map
+boundingbox <- st_as_sfc(st_bbox(wtrshd_bndry))
+states <- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16-18/cb_2018_us_state_5m.shp")
+states <- states %>% 
+  filter(NAME == "California")
+#  filter(!NAME == "Alaska" & !NAME == "Hawaii" & !NAME == "American Samoa" & !NAME == "Guam" & !NAME == "Commonwealth of the Northern Mariana Islands" & !NAME == "Puerto Rico"
+#         & !NAME == "United States Virgin Islands")
+states <- st_transform(states, crs = 2163)
+ggm1 = ggplot() + 
+  geom_sf(data = states, fill = "white") + 
+  geom_sf(data = boundingbox, fill = NA, color = "red", size = 1.2) +
+  theme_void()
 
-ggplot() +
-  geom_sf(data = test, color = "lightblue") +
-  geom_sf(data = wtrshd_bndry, fill = "white", alpha = 0, color = gray(.3), lwd = 1) +
-  geom_sf(data = mdlwtrshds1, alpha = .8, color = gray(.3)) +
-  geom_sf(data = mdlwtrshds2, alpha = .8, color = gray(.3)) +
-  geom_sf(data = mdlwtrshds3, alpha = .8, color = gray(.3)) +
-  geom_sf(data = mdlwtrshds4, alpha = .8, color = gray(.3)) + 
-  geom_sf(data = tmppts, color = "orange") +
-  geom_sf(data = flwpts, color = "blue") +
-  theme(panel.grid.major=element_line(colour="transparent"),panel.background = element_blank(),
-        axis.text = element_blank(),axis.ticks = element_blank(),
-        text = element_text(size=30))
+ggm1
 
 
-#filter out reaches we didn't do, add in legend, north arrow, scale bar, color NHD reaches by elevation
+colors <- c("Temperature Gauge" = "red", "Flow Gauge" = "Blue")
+
+a <- ggplot() +
+  geom_sf(data = wtrshd_bndry, fill = grey(0.6), alpha = 0.4, color = gray(.7), lwd = 1) +
+  geom_sf(data = NHD, color = "lightskyblue2") +
+  geom_sf(data = clusters, color = "lightsalmon2") +
+  geom_sf(data = mdlwtrshds1, fill = "white", alpha = 0, color = gray(.2), lwd = 1) +
+  geom_sf(data = mdlwtrshds2, fill = "white", alpha = 0, color = gray(.2), lwd = 1) +
+  geom_sf(data = mdlwtrshds3, fill = "white", alpha = 0, color = gray(.2), lwd = 1) +
+  geom_sf(data = mdlwtrshds4, fill = "white", alpha = 0, color = gray(.2), lwd = 1) + 
+  geom_sf(data = tmppts, color = "red", pch = 15, size = 2)+
+  geom_sf(data = flwpts, color = "blue", pch = 16, size = 2, show.legend = "point") +
+  theme_bw() +
+  theme(panel.grid = element_line(colour = "transparent"),
+    axis.title = element_text(size = 18),
+    axis.text = element_text(size = 16),
+    legend.text = element_text(size = 14),
+    legend.title = element_text(size = 14))+
+  annotation_scale(location = "bl", width_hint = 0.5, height = unit(.5, "cm"), text_cex = 1.5) +
+  annotation_north_arrow(location = "bl", which_north = "true", 
+                         pad_x = unit(0.5, "in"), pad_y = unit(0.5, "in"),
+                         style = north_arrow_fancy_orienteering(text_size = 20),
+                         height = unit(2.5, "cm"), width = unit(2.5, "cm"))
+
+gg_inset_map1 = ggdraw() +
+  draw_plot(a) +
+  draw_plot(ggm1, x = 0.07, y = 0.30, width = 0.2, height = .2)
+
+
+
+ggsave("map.tiff", plot = gg_inset_map1, dpi = 300, width = 10, height = 10, compression = "lzw")
+
+
+
+
+
 ```
