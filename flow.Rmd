@@ -469,7 +469,12 @@ p<-arrangeGrob(
   c+ margin, nrow = 2)
 ggsave("figy.tiff", plot = p, dpi = 300, width = 20, height = 10, compression = "lzw")
 
-
+#ranges of the standardized changes
+range(chng$change[chng$variable == "HighNum"], na.rm = T) #-1.900366  1.387949
+range(chng$change[chng$variable == "Hydroperiod"], na.rm = T) #-1.323236  1.344842
+range(chng$change[chng$variable == "Q99"], na.rm = T) #-1.648448  6.080784
+range(chng$change[chng$variable == "SFR"], na.rm = T) #-1.695554  1.716185
+range(chng$change[chng$variable == "LowDur"], na.rm = T) #-5.8036498  0.8156672
 
 #next we want to map the change spatially
 chng <- flow %>%

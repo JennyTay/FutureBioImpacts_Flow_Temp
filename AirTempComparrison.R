@@ -150,11 +150,13 @@ rm(dat)
 summary(lm(temp_C ~ Tmean_C_liv, data = temperature_C))
 
 load("clusters.RData")
+temperature_C <- temperature_C %>% 
+  filter(COMID %in% clusters$COMID)
 
-cor(temperature_C$temp_C, temperature_C$Tmean_C_liv, use = "complete.obs") #0.70649
+cor(temperature_C$temp_C, temperature_C$Tmean_C_liv, use = "complete.obs") #0.69
 error <- (temperature_C$temp_C - temperature_C$Tmean_C_liv)
 errorsq <- error^2
-RMSE <- sqrt(mean(errorsq, na.rm = TRUE)) #3.59
+RMSE <- sqrt(mean(errorsq, na.rm = TRUE)) #3.78
 
 yrlyRMSE <- temperature_C %>% 
   group_by(year) %>% 
@@ -163,6 +165,6 @@ yrlyRMSE <- temperature_C %>%
             meanHal = mean(temp_C, na.rm = T))
 
 
-mean(temperature_C$temp_C, na.rm = T) #18.97293
-mean(temperature_C$Tmean_C_liv, na.rm = T) #19.52786
-hist(error)
+mean(temperature_C$temp_C, na.rm = T) #18.65525
+mean(temperature_C$Tmean_C_liv, na.rm = T) #18.91714
+hist(error, main = "Histogram of Error (Walton - Livneh)", xlab = "Error")
