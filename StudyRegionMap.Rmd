@@ -13,7 +13,7 @@ library(cowplot)
 library(gridExtra)
 library(ggspatial)
 
-#load all data
+#load all data 
 
 NHD <- st_read("C:/Users/JennyT/Documents/LitReview/RB4/StreamCat/NHDPlusV21_CA_18_NHDSnapshot_05/NHDPlusCA/NHDPlus18/NHDSnapshot/Hydrography/NHDFlowline.shp")%>% st_zm() %>% 
   filter(FTYPE %in% c("StreamRiver"))
