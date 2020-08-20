@@ -152,7 +152,7 @@ In the next code chunks, we want to calutate, tabulate, and plot the change in 1
 
 first we will read in the baseline flow metrics and the future flow metrics
 ```{r}
-NHD <- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16-18/NHDFLowline_Clip.shp")  %>%
+NHD <- st_read("C:/Users/Jenny/Documents/JennySCCWRP/LitReview/RB4/WorkingData_3-16-18/NHDFLowline_Clip.shp")  %>%
   filter(FTYPE == "StreamRiver") %>%
   dplyr::select(COMID) %>%
   st_zm()
@@ -202,11 +202,15 @@ in this next chunk of code, we will plot the distributions of COMIDs for each ye
 ```{r}
 
 load("flowmet_all.RData")
+#convert Q99 variables from cfs to cms
+flow <- flow %>% 
+  mutate(all_Q99 = all_Q99 * 0.0283,
+         x3_Q99 = x3_Q99 * 0.0283)
 
 
 a <- ggplot(data = flow, mapping = aes(x = factor(type, levels = c("dry", "mod", "wet")), y = x3_HighNum, fill = time))+
   geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+
-  labs(y="Number of Storms", x = NULL)+
+  labs(y="Number of Storms (#)", x = NULL)+
   ggtitle("(A)")+ 
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), 
@@ -216,28 +220,28 @@ a <- ggplot(data = flow, mapping = aes(x = factor(type, levels = c("dry", "mod",
 
 b <- ggplot(data = flow, mapping = aes(x = factor(type, levels = c("dry", "mod", "wet")), y = x3_LowDur, fill = time))+
   geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+
-  labs(y="Low Duration", x = NULL)+
+  labs(y="Low Duration (days)", x = NULL)+
   ggtitle("(C)")+ 
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none")
 
 c <- ggplot(data = flow, mapping = aes(x = factor(type, levels = c("dry", "mod", "wet")), y = x3_Hydroperiod, fill = time))+
   geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+
-  labs(y="Hydroperiod", x = NULL)+
+  labs(y="Hydroperiod (%)", x = NULL)+
   ggtitle("(D)")+ 
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5),legend.position = "none")
 
 d <- ggplot(data = flow, mapping = aes(x = factor(type, levels = c("dry", "mod", "wet")), y = x3_Q99, fill = time))+
   geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+
-  labs(y="Q99", x = NULL)+
+  labs(y="Q99 (cms)", x = NULL)+
   ggtitle("(B)")+ 
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none")
 
 e <- ggplot(data = flow, mapping = aes(x = factor(type, levels = c("dry", "mod", "wet")), y = x3_SFR, fill = time))+
   geom_boxplot()+ scale_fill_manual(values=c("grey90", "grey60"))+
-  labs(y="SFR", x = "Water Year Type")+
+  labs(y="SFR (%/day)", x = "Water Year Type")+
   ggtitle("(E)")+ 
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5), legend.position = "none")
@@ -293,9 +297,9 @@ flow_sum <- flow %>%
             LoDuChg_mn = round(mean(x3_LowDur[time == "future"]-x3_LowDur[time == "baseline"], na.rm = T), 0),
             LoDuChg_05 = round(quantile(x3_LowDur[time == "future"]-x3_LowDur[time == "baseline"], na.rm = T, probs = 0.05), 0),
             LoDuChg_95 = round(quantile(x3_LowDur[time == "future"]-x3_LowDur[time == "baseline"], na.rm = T, probs = 0.95), 0),
-            Q99_mn = round(mean(x3_Q99[time == "future"]-x3_Q99[time == "baseline"], na.rm = T), 0),
-            Q99_05 = round(quantile(x3_Q99[time == "future"]-x3_Q99[time == "baseline"], na.rm = T, probs = 0.05), 0),
-            Q99_95 = round(quantile(x3_Q99[time == "future"]-x3_Q99[time == "baseline"], na.rm = T, probs = 0.95), 0),
+            Q99_mn = round(mean(x3_Q99[time == "future"]-x3_Q99[time == "baseline"], na.rm = T), 2),
+            Q99_05 = round(quantile(x3_Q99[time == "future"]-x3_Q99[time == "baseline"], na.rm = T, probs = 0.05), 2),
+            Q99_95 = round(quantile(x3_Q99[time == "future"]-x3_Q99[time == "baseline"], na.rm = T, probs = 0.95), 2),
             Hydrop_mn = round(mean(x3_Hydroperiod[time == "future"]-x3_Hydroperiod[time == "baseline"], na.rm = T), 2),
             Hydrop_05 = round(quantile(x3_Hydroperiod[time == "future"]-x3_Hydroperiod[time == "baseline"], na.rm = T, probs = 0.05), 2),
             Hydrop_95 = round(quantile(x3_Hydroperiod[time == "future"]-x3_Hydroperiod[time == "baseline"], na.rm = T, probs = 0.95), 2),
@@ -331,9 +335,9 @@ flow_sum <- flow %>%
             LoDuChg_mn = round(mean(x3_LowDur[time == "future"]-x3_LowDur[time == "baseline"], na.rm = T), 0),
             LoDuChg_05 = round(quantile(x3_LowDur[time == "future"]-x3_LowDur[time == "baseline"], na.rm = T, probs = 0.05), 0),
             LoDuChg_95 = round(quantile(x3_LowDur[time == "future"]-x3_LowDur[time == "baseline"], na.rm = T, probs = 0.95), 0),
-            Q99_mn = round(mean(x3_Q99[time == "future"]-x3_Q99[time == "baseline"], na.rm = T), 0),
-            Q99_05 = round(quantile(x3_Q99[time == "future"]-x3_Q99[time == "baseline"], na.rm = T, probs = 0.05), 0),
-            Q99_95 = round(quantile(x3_Q99[time == "future"]-x3_Q99[time == "baseline"], na.rm = T, probs = 0.95), 0),
+            Q99_mn = round(mean(x3_Q99[time == "future"]-x3_Q99[time == "baseline"], na.rm = T), 2),
+            Q99_05 = round(quantile(x3_Q99[time == "future"]-x3_Q99[time == "baseline"], na.rm = T, probs = 0.05), 2),
+            Q99_95 = round(quantile(x3_Q99[time == "future"]-x3_Q99[time == "baseline"], na.rm = T, probs = 0.95), 2),
             Hydrop_mn = round(mean(x3_Hydroperiod[time == "future"]-x3_Hydroperiod[time == "baseline"], na.rm = T), 2),
             Hydrop_05 = round(quantile(x3_Hydroperiod[time == "future"]-x3_Hydroperiod[time == "baseline"], na.rm = T, probs = 0.05), 2),
             Hydrop_95 = round(quantile(x3_Hydroperiod[time == "future"]-x3_Hydroperiod[time == "baseline"], na.rm = T, probs = 0.95), 2),
@@ -584,8 +588,8 @@ similarly <- flow %>%
             sdNH  = round(sd(x3_HighNum, na.rm = T), 2),
             muLD = round(mean(x3_LowDur, na.rm = T), 0),
             sdLD  = round(sd(x3_LowDur, na.rm = T), 0),
-            mu99 = round(mean(x3_Q99, na.rm = T), 0),
-            sd99 = round(sd(x3_Q99, na.rm = T), 0),
+            mu99 = round(mean(x3_Q99, na.rm = T), 2),
+            sd99 = round(sd(x3_Q99, na.rm = T), 2),
             muSFR = round(mean(x3_SFR, na.rm = T), 2),
             sdSFR = round(sd(x3_SFR, na.rm = T), 2),
             muhyd = round(mean(x3_Hydroperiod, na.rm = T), 2),
