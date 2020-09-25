@@ -25,20 +25,20 @@ line 1038 Air_temp_future MIROC5_stream_temp
 In this first chunk of code, we are reading in the stream temperature models, the baseline stream temperatures metrics and the projected stream temperature metrics for the three GCMs. The files are currently in other folders on the sccwrp L drive, so we read them in, and then re-save to this folder.  We average the metrics from each GCM and save the file as 'future'.
 
 ```{r}
-# load("C:/Users/JennyT/Documents/LitReview/RB4/AirTemp/Modeling/mod_mean.rda")
+# load("C:/Users/Jenny/Documents/JennySCCWRP/LitReview/RB4/AirTemp/Modeling/mod_mean.rda")
 # save(mod_mean, file = "mean_temp_model.rda")
 load("mean_temp_model.rda")
 
 # 
-# load("C:/Users/JennyT/Documents/LitReview/RB4/AirTemp/Modeling/mod_max.rda")
+# load("C:/Users/Jenny/Documents/JennySCCWRP/LitReview/RB4/AirTemp/Modeling/mod_max.rda")
 # save(mod_max, file = "max_temp_model.rda")
 load("max_temp_model.rda")
 
-# load("C:/Users/JennyT/Documents/LitReview/RB4/AirTemp/Modeling/mod_min.rda")
+# load("C:/Users/Jenny/Documents/JennySCCWRP/LitReview/RB4/AirTemp/Modeling/mod_min.rda")
 # save(mod_min, file = "min_temp_model.rda")
 load("min_temp_model.rda")
 
-# load('C:/Users/JennyT/Documents/LitReview/RB4/AirTemp/Modeling/baseline_stream_temp.RData')
+# load('C:/Users/Jenny/Documents/JennySCCWRP/LitReview/RB4/AirTemp/Modeling/baseline_stream_temp.RData')
 # baseline_stream_temp <- baseline_stream_temp  %>%
 #   ungroup() %>%
 #   data.frame()
@@ -46,7 +46,7 @@ load("min_temp_model.rda")
 # save(baseline_stream_temp, file = "baseline_stream_temp.RData", compress = "xz")
 load("baseline_stream_temp.RData")
 
-# load('C:/Users/JennyT/Documents/LitReview/RB4/AirTemp/Modeling/fut_stream_temp.RData')
+# load('C:/Users/Jenny/Documents/JennySCCWRP/LitReview/RB4/AirTemp/Modeling/fut_stream_temp.RData')
 # fut_stream_temp <- fut_stream_temp  %>%
 #   ungroup() %>%
 #   data.frame()
@@ -62,18 +62,18 @@ load("fut_strm_tmp.RData")
 
 In this next chunk of code, we will make a watershed and elevation to COMID conversion file, so we can summarize by watershed or elevation
 ```{r}
-# NHD <- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16-18/NHDFLowline_Clip.shp")  %>%
+# NHD <- st_read("C:/Users/Jenny/Documents/JennySCCWRP/LitReview/RB4/WorkingData_3-16-18/NHDFLowline_Clip.shp")  %>%
 #   filter(FTYPE == "StreamRiver") %>%
 #   dplyr::select(COMID) %>%
 #   st_zm()
 # 
-# wtrshd_bndry<- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16-18/RB4watershedBoundaty.shp") %>%
+# wtrshd_bndry<- st_read("C:/Users/Jenny/Documents/JennySCCWRP/LitReview/RB4/WorkingData_3-16-18/RB4watershedBoundaty.shp") %>%
 #   dplyr::select(NAME) %>%
 #   st_zm() %>%
 #   rename(watershed = NAME)
 # 
 # #assign < 1000ft as low, 1000-5000 as mid, and higher than 5000 as high
-# # elv <- read.csv("C:/Users/JennyT/Documents/LitReview/RB4/StreamCat/Elevation_Region18.csv") %>%
+# # elv <- read.csv("C:/Users/Jenny/Documents/JennySCCWRP/LitReview/RB4/StreamCat/Elevation_Region18.csv") %>%
 # #   dplyr::select(COMID, ElevCat) %>%
 # #   mutate(elv = ifelse(ElevCat<375, "low", "high"))
 # # save(elv, file = "elv_comid.RData")
@@ -327,18 +327,18 @@ round(apply(chng, 2, function (x){
 }), 2)
 
 #join back with NHD so that we can plot it spatially
-# NHD <- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16-18/NHDFLowline_Clip.shp") %>%
+# NHD <- st_read("C:/Users/Jenny/Documents/JennySCCWRP/LitReview/RB4/WorkingData_3-16-18/NHDFLowline_Clip.shp") %>%
 #   filter(FTYPE == "StreamRiver") %>%
 #   dplyr::select(COMID)
 # # save(NHD, file = "NHD_strm_rvr_map.RData")
 # load("NHD_strm_rvr_map.RData")
-# chng <- left_join(NHD, chng, by = "COMID") %>% 
+# chng <- left_join(NHD, chng, by = "COMID") %>%
 #   filter(!is.na(max))
 # 
 # save(chng, file = "tmp_metrics_change.RData")
 load("tmp_metrics_change.RData")
 
-# wtrshd_bndry<- st_read("C:/Users/JennyT/Documents/LitReview/RB4/WorkingData_3-16-18/RB4watershedBoundaty.shp") %>% 
+# wtrshd_bndry<- st_read("C:/Users/Jenny/Documents/JennySCCWRP/LitReview/RB4/WorkingData_3-16-18/RB4watershedBoundaty.shp") %>% 
 #   dplyr::select(NAME) %>% 
 #   st_zm() 
 # save(wtrshd_bndry, file = "wtrshd_bundry.RData")

@@ -22,7 +22,7 @@ In this document, we make predictions for the probability of biological occurren
 First, we build a model to predict spp presence or absence with the temperature data. we run PCA on the training data so that we run a logistic regression with spp presence and absece data using PCA predictor variables. This lets us use all the temp varialbes for each spp, but ensures that the variables are not correlated.  Then we run the logistic regression..
 ```{r}
 
-#load("L:/Flow ecology and climate change_ES/Jenny/AirTemp/Modeling/spp_tmp_train_dat.RData")
+#load("C:/Users/Jenny/Documents/JennySCCWRP/LitReview/RB4/AirTemp/Modeling/spp_tmp_train_dat.RData")
 #save(species, file = "spp_tmp_dat.RData")
 load("spp_tmp_dat.RData")
 pca <- prcomp(species[,5:10], scale=TRUE)
@@ -304,7 +304,7 @@ myPalette <- colorRampPalette(brewer.pal(9, "RdYlBu"))
 a <- ggplot(data = chng, aes(col=chng$chub_chg)) +
   geom_sf(data = wtrshd_bndry, fill = "white", color = gray(.3), lwd = 1) +
   geom_sf()+
-  scale_color_gradientn(colours = myPalette(100), limits = c(min(chng$chub_chg), max(chng$chub_chg)))+
+  scale_color_gradientn(colours = myPalette(100), limits = c(-(max(chng$chub_chg)), max(chng$chub_chg)))+
   labs(col = "\u0394 P") +  ggtitle("(A)", subtitle = "Arroyo chub") + 
   theme(panel.grid.major=element_line(colour="transparent"),panel.background = element_blank(),
         axis.text = element_blank(),axis.ticks = element_blank(),
@@ -312,7 +312,7 @@ a <- ggplot(data = chng, aes(col=chng$chub_chg)) +
 b <- ggplot(data = chng, aes(col=chng$suc_chg)) +
   geom_sf(data = wtrshd_bndry, fill = "white", color = gray(.3), lwd = 1) +
   geom_sf()+
-  scale_color_gradientn(colours = myPalette(100), limits = c(min(chng$suc_chg), max(chng$suc_chg)))+
+  scale_color_gradientn(colours = myPalette(100), limits = c(min(chng$suc_chg), -(min(chng$suc_chg))))+
   labs(col = "\u0394 P") +  ggtitle("(D)", subtitle = "Santa Ana sucker") + 
   theme(panel.grid.major=element_line(colour="transparent"),panel.background = element_blank(),
         axis.text = element_blank(),axis.ticks = element_blank(),
@@ -320,15 +320,15 @@ b <- ggplot(data = chng, aes(col=chng$suc_chg)) +
 c <- ggplot(data = chng, aes(col=chng$trt_chg)) +
   geom_sf(data = wtrshd_bndry, fill = "white", color = gray(.3), lwd = 1) +
   geom_sf()+
-  scale_color_gradientn(colours = myPalette(100), limits = c(min(chng$trt_chg), max(chng$trt_chg)))+
-  labs(col = "\u0394 P") +  ggtitle("(B)", subtitle = "rainbow trout") + 
+  scale_color_gradientn(colours = myPalette(100), limits = c(min(chng$trt_chg), -(min(chng$trt_chg))))+
+  labs(col = "\u0394 P") +  ggtitle("(B)", subtitle = "Rainbow trout") + 
   theme(panel.grid.major=element_line(colour="transparent"),panel.background = element_blank(),
         axis.text = element_blank(),axis.ticks = element_blank(),
         text = element_text(size=30))
 d <- ggplot(data = chng, aes(col=chng$vir_chg)) +
   geom_sf(data = wtrshd_bndry, fill = "white", color = gray(.3), lwd = 1) +
   geom_sf()+
-  scale_color_gradientn(colours = myPalette(100), limits = c(min(chng$vir_chg), max(chng$vir_chg)))+
+  scale_color_gradientn(colours = myPalette(100), limits = c(-(max(chng$vir_chg)), max(chng$vir_chg)))+
   labs(col = "\u0394 P") +  ggtitle("(E)", subtitle = "Least Bell's vireo") + 
   theme(panel.grid.major=element_line(colour="transparent"),panel.background = element_blank(),
         axis.text = element_blank(),axis.ticks = element_blank(),
@@ -336,7 +336,7 @@ d <- ggplot(data = chng, aes(col=chng$vir_chg)) +
 e <- ggplot(data = chng, aes(col=chng$toa_chg)) +
   geom_sf(data = wtrshd_bndry, fill = "white", color = gray(.3), lwd = 1) +
   geom_sf()+
-  scale_color_gradientn(colours = myPalette(100), limits = c(min(chng$toa_chg), max(chng$toa_chg)))+
+  scale_color_gradientn(colours = myPalette(100), limits = c(min(chng$toa_chg), -(min(chng$toa_chg))))+
   labs(col = "\u0394 P") +  ggtitle("(C)", subtitle = "Arroyo toad") + 
   theme(panel.grid.major=element_line(colour="transparent"),panel.background = element_blank(),
         axis.text = element_blank(),axis.ticks = element_blank(),
@@ -344,7 +344,7 @@ e <- ggplot(data = chng, aes(col=chng$toa_chg)) +
 f <- ggplot(data = chng, aes(col=chng$tur_chg)) +
   geom_sf(data = wtrshd_bndry, fill = "white", color = gray(.3), lwd = 1) +
   geom_sf()+
-  scale_color_gradientn(colours = myPalette(100), limits = c(min(chng$tur_chg), max(chng$tur_chg)))+
+  scale_color_gradientn(colours = myPalette(100), limits = c(min(chng$tur_chg), -(min(chng$tur_chg))))+
   labs(col = "\u0394 P") +  ggtitle("(F)", subtitle = "Southwestern pond turtle") + 
   theme(panel.grid.major=element_line(colour="transparent"),panel.background = element_blank(),
         axis.text = element_blank(),axis.ticks = element_blank(),
@@ -382,7 +382,7 @@ h <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = suc_chg))+
 i <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = trt_chg))+
   geom_violin()+geom_boxplot(width = .08)+
   labs(y="\u0394 P", x = NULL)+
-  ggtitle("(H)", subtitle = "rainbow trout")+ 
+  ggtitle("(H)", subtitle = "Rainbow trout")+ 
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
 j <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = vir_chg))+
@@ -400,7 +400,7 @@ k <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = toa_chg))+
 l <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = tur_chg))+
   geom_violin()+geom_boxplot(width = .08)+
   labs(y="\u0394 P", x = NULL)+
-  ggtitle("(L)", subtitle = "southwestern pond turtle")+ 
+  ggtitle("(L)", subtitle = "Southwestern pond turtle")+ 
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
 
