@@ -400,7 +400,7 @@ k <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = toa_chg))+
 l <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = tur_chg))+
   geom_violin()+geom_boxplot(width = .08)+
   labs(y="\u0394 P", x = NULL)+
-  ggtitle("(L)", subtitle = "Southwestern pond turtle")+ 
+  ggtitle("(L)", subtitle = "SW pond turtle")+ 
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
 
@@ -586,7 +586,7 @@ p <- ggplot(data = comp3, aes(x = factor(time), y = Probability, fill = metric))
 ggsave("fig5.tiff", plot = p, dpi = 300, width = 19.05, height = 12, compression = "lzw")
 
 
-#table for the average chang ein flow vs the average change in T
+#table for the average change in flow vs the average change in T
 d <- comp3 %>% 
   group_by(Species, metric) %>% 
   summarise(change = round(mean(Probability[time == "future"]-Probability[time == "baseline"], na.rm = T), 2))
