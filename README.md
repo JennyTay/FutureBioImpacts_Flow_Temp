@@ -59,9 +59,16 @@ This repository has data files and R Markdown files that we used to analyze the 
 
 
 
+**Species Data**
+
+**SppOcc.RData**:  Dataframe with the species name, COMID and month and year of observation, occurrence outcome, and source of observation.
+
+
+
 **Scripts**  
   
 **flow.Rmd**: Analysis of changes to streamflow  
 **Temp.Rmd**:  Analysis of changes to stream temperature  
 **bio_predictions.Rmd**:  Analysis for changes to habitat suitability  
 **Timeframe_Comparrison.Rmd**:  Comparrison of results from models using short term (3 years) of streamflow data and the entire timeseries  
+**StudyRegionMap.Rmd**: script used to prepare the map of the study region for the manuscript

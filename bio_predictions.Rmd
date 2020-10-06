@@ -313,7 +313,7 @@ b <- ggplot(data = chng, aes(col=chng$suc_chg)) +
   geom_sf(data = wtrshd_bndry, fill = "white", color = gray(.3), lwd = 1) +
   geom_sf()+
   scale_color_gradientn(colours = myPalette(100), limits = c(min(chng$suc_chg), -(min(chng$suc_chg))))+
-  labs(col = "\u0394 P") +  ggtitle("(D)", subtitle = "Santa Ana sucker") + 
+  labs(col = "\u0394 P") +  ggtitle("(E)", subtitle = "Santa Ana sucker") + 
   theme(panel.grid.major=element_line(colour="transparent"),panel.background = element_blank(),
         axis.text = element_blank(),axis.ticks = element_blank(),
         text = element_text(size=30))
@@ -329,7 +329,7 @@ d <- ggplot(data = chng, aes(col=chng$vir_chg)) +
   geom_sf(data = wtrshd_bndry, fill = "white", color = gray(.3), lwd = 1) +
   geom_sf()+
   scale_color_gradientn(colours = myPalette(100), limits = c(-(max(chng$vir_chg)), max(chng$vir_chg)))+
-  labs(col = "\u0394 P") +  ggtitle("(E)", subtitle = "Least Bell's vireo") + 
+  labs(col = "\u0394 P") +  ggtitle("(D)", subtitle = "Least Bell's vireo") + 
   theme(panel.grid.major=element_line(colour="transparent"),panel.background = element_blank(),
         axis.text = element_blank(),axis.ticks = element_blank(),
         text = element_text(size=30))
@@ -376,7 +376,7 @@ g <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = chub_chg))
 h <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = suc_chg))+
   geom_violin()+geom_boxplot(width = .08)+
   labs(y="\u0394 P", x = NULL)+
-  ggtitle("(J)", subtitle = "Santa Ana sucker")+ 
+  ggtitle("(K)", subtitle = "Santa Ana sucker")+ 
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
 i <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = trt_chg))+
@@ -388,7 +388,7 @@ i <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = trt_chg))+
 j <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = vir_chg))+
   geom_violin()+geom_boxplot(width = .08)+
   labs(y="\u0394 P", x = NULL)+
-  ggtitle("(K)", subtitle = "Least Bell's vireo")+ 
+  ggtitle("(J)", subtitle = "Least Bell's vireo")+ 
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
 k <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = toa_chg))+
@@ -407,9 +407,9 @@ l <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = tur_chg))+
 margin = theme(plot.margin = unit(c(2,2,2,2), "mm"))
 p<-arrangeGrob(
   a + margin, g + margin, 
-  b + margin, h + margin, 
-  c + margin, i + margin, 
   d + margin, j + margin, 
+  c + margin, i + margin, 
+  b + margin, h + margin, 
   e + margin, k + margin, 
   f + margin, l + margin, 
   nrow = 3)
