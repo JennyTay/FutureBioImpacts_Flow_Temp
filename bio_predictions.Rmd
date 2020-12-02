@@ -312,7 +312,8 @@ a <- ggplot(data = chng, aes(col=chng$chub_chg)) +
 b <- ggplot(data = chng, aes(col=chng$suc_chg)) +
   geom_sf(data = wtrshd_bndry, fill = "white", color = gray(.3), lwd = 1) +
   geom_sf()+
-  scale_color_gradientn(colours = myPalette(100), limits = c(min(chng$suc_chg), -(min(chng$suc_chg))))+
+  scale_color_gradientn(colours = myPalette(100), limits = c(min(chng$suc_chg), -(min(chng$suc_chg))), 
+                        breaks = c(-.15, 0, .15), labels = c("-0.15", "0", "0.15"))+
   labs(col = "\u0394 P") +  ggtitle("(E)", subtitle = "Santa Ana sucker") + 
   theme(panel.grid.major=element_line(colour="transparent"),panel.background = element_blank(),
         axis.text = element_blank(),axis.ticks = element_blank(),
@@ -369,7 +370,7 @@ t.test(chng[chng$elv=="low", 7], chng[chng$elv=="high", 7])#tur
 
 g <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = chub_chg))+
   geom_violin()+geom_boxplot(width = .08)+
-  labs(y="\u0394 P", x = "Elevation group")+
+  labs(y="\u0394 P", x = NULL)+
   ggtitle("(G)", subtitle = "Arroyo chub")+ 
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
@@ -393,13 +394,13 @@ j <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = vir_chg))+
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
 k <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = toa_chg))+
   geom_violin()+geom_boxplot(width = .08)+
-  labs(y="\u0394 P", x = NULL)+
+  labs(y="\u0394 P", x = "Elevation group")+
   ggtitle("(I)", subtitle = "Arroyo toad")+ 
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
 l <- ggplot(chng, aes(x = factor(elv, levels = c("low", "high")), y = tur_chg))+
   geom_violin()+geom_boxplot(width = .08)+
-  labs(y="\u0394 P", x = NULL)+
+  labs(y="\u0394 P", x = "Elevation group")+
   ggtitle("(L)", subtitle = "SW pond turtle")+ 
   theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))

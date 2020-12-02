@@ -323,7 +323,7 @@ chng <- data.frame(
 round(colMeans(chng),2)
 
 round(apply(chng, 2, function (x){
-  quantile(x, probs = 0.05)
+  quantile(x, probs = 0.95)
 }), 2)
 
 #join back with NHD so that we can plot it spatially
